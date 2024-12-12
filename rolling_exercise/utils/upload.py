@@ -18,10 +18,13 @@ async def process_csv(file: fastapi.UploadFile):
         try:
             df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
         except pd.errors.ParserError as e:
-            air_quality_api_logger.error(f"CSV file parsing error for {file.filename}: {str(e)}")
-            raise ValueError(f"The file '{file.filename}' could not be parsed. Check the file format.")
+            air_quality_api_logger.error(
+                f"CSV file parsing error for {file.filename}: {str(e)}")
+            raise ValueError(
+                f"The file '{file.filename}' could not be parsed. Check the file format.")
 
         records = []
+        validation_errors = []
 
         for _, row in df.iterrows():
             try:
@@ -35,24 +38,32 @@ async def process_csv(file: fastapi.UploadFile):
                 records.append(record)
 
             except pydantic.ValidationError as e:
-                air_quality_api_logger.error(f"Validation error for row: {row}, error: {str(e)}")
+                error_message = f"row {row}: {str(e)}"
+                validation_errors.append(error_message)
+                air_quality_api_logger.error(
+                    f"Validation error for file: {file.filename} for {error_message}")
+
                 continue
 
         if not records:
-            air_quality_api_logger.error(f"No valid data found after processing file: {file.filename}.")
+            air_quality_api_logger.error(
+                f"No valid data found after processing file: {file.filename}.")
+
             raise ValueError("No valid data found after processing the file.")
 
         air_quality_api_logger.info(
             f"Successfully processed {len(records)} rows from {file.filename}")
 
-        return records
+        return records, validation_errors
 
     except Exception as e:
-        air_quality_api_logger.error(f"Unexpected error while processing file {file.filename}: {str(e)}")
-        raise RuntimeError(f"An unexpected error occurred while processing the file '{file.filename}'.")
+        air_quality_api_logger.error(
+            f"Unexpected error while processing file {file.filename}: {str(e)}")
+        raise RuntimeError(
+            f"An unexpected error occurred while processing the file '{file.filename}'.")
 
 
-async def add_records_to_db(records: list, db_session: sqlalchemy.orm.Session):
+def add_records_to_db(records: list, db_session: sqlalchemy.orm.Session):
     try:
         air_quality_api_logger.info(f"Attempting to add {len(records)} records to the database.")
 
@@ -81,9 +92,11 @@ async def add_records_to_db(records: list, db_session: sqlalchemy.orm.Session):
         db_session.bulk_save_objects(db_records)
         db_session.commit()
 
-        air_quality_api_logger.info(f"Successfully added {len(db_records)} records to the database.")
+        air_quality_api_logger.info(
+            f"Successfully added {len(db_records)} records to the database.")
 
     except Exception as e:
         db_session.rollback()
-        air_quality_api_logger.error(f"Error while adding {len(records)} records to the database: {str(e)}")
+        air_quality_api_logger.error(
+            f"Error while adding {len(records)} records to the database: {str(e)}")
         raise RuntimeError("Failed to add records to the database.")
