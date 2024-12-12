@@ -17,11 +17,16 @@ async def process_csv(file: fastapi.UploadFile):
         contents = await file.read()
         try:
             df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
-        except pd.errors.ParserError as e:
+        except pd.errors.ParserError as error:
             air_quality_api_logger.error(
-                f"CSV file parsing error for {file.filename}: {str(e)}")
-            raise ValueError(
-                f"The file '{file.filename}' could not be parsed. Check the file format.")
+                f"CSV file parsing error for {file.filename}: {str(error)}")
+            raise fastapi.HTTPException(
+                status_code=400,
+                detail={
+                    "status": "error",
+                    "message": f"The file '{file.filename}' could not be parsed. Check the file format."
+                }
+            )
 
         records = []
         validation_errors = []
@@ -37,30 +42,45 @@ async def process_csv(file: fastapi.UploadFile):
                 )
                 records.append(record)
 
-            except pydantic.ValidationError as e:
-                error_message = f"row {row}: {str(e)}"
+            except pydantic.ValidationError as error:
+                error_message = f"row {row}: {str(error)}"
                 validation_errors.append(error_message)
                 air_quality_api_logger.error(
-                    f"Validation error for file: {file.filename} for {error_message}")
+                    f"Validation error for file: {file.filename} for {error_message}"
+                )
 
                 continue
 
         if not records:
             air_quality_api_logger.error(
                 f"No valid data found after processing file: {file.filename}.")
-
-            raise ValueError("No valid data found after processing the file.")
+            raise fastapi.HTTPException(
+                status_code=400,
+                detail={
+                    "status": "error",
+                    "message": "No valid data found after processing the file."
+                }
+            )
 
         air_quality_api_logger.info(
-            f"Successfully processed {len(records)} rows from {file.filename}")
+            f"Successfully processed {len(records)} rows from {file.filename}"
+        )
 
-        return records, validation_errors
+        return {"data": records, "validation_errors": validation_errors}
 
-    except Exception as e:
+    except fastapi.HTTPException as error:
+        raise error
+    except Exception as error:
         air_quality_api_logger.error(
-            f"Unexpected error while processing file {file.filename}: {str(e)}")
-        raise RuntimeError(
-            f"An unexpected error occurred while processing the file '{file.filename}'.")
+            f"Unexpected error while processing file {file.filename}: {str(error)}"
+        )
+        raise fastapi.HTTPException(
+            status_code=500,
+            detail={
+                "status": "error",
+                "message": "An unexpected error occurred while processing the file."
+            }
+        )
 
 
 def add_records_to_db(records: list, db_session: sqlalchemy.orm.Session):
@@ -93,10 +113,20 @@ def add_records_to_db(records: list, db_session: sqlalchemy.orm.Session):
         db_session.commit()
 
         air_quality_api_logger.info(
-            f"Successfully added {len(db_records)} records to the database.")
+            f"Successfully added {len(db_records)} records to the database."
+        )
 
-    except Exception as e:
+        return {"data": {"message": f"Successfully added {len(db_records)} records to the database."}}
+
+    except Exception as error:
         db_session.rollback()
         air_quality_api_logger.error(
-            f"Error while adding {len(records)} records to the database: {str(e)}")
-        raise RuntimeError("Failed to add records to the database.")
+            f"Error while adding {len(records)} records to the database: {str(error)}"
+        )
+        raise fastapi.HTTPException(
+            status_code=500,
+            detail={
+                "status": "error",
+                "message": "Failed to add records to the database."
+            }
+        )
