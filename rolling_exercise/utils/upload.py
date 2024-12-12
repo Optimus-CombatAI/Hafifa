@@ -1,61 +1,89 @@
+import sqlalchemy.orm
 import pandas as pd
-import os
-from datetime import datetime
-from typing import List
-from .logging import app_logger
-
-def validate_data(df: pd.DataFrame) -> pd.DataFrame:
-    required_columns = ["city", "date", "PM2.5", "NO2", "CO2"]
-
-    for column in required_columns:
-        if column not in df.columns:
-            app_logger.error(f"Missing required column: {column}")
-            raise ValueError(f"Missing required column: {column}")
-
-    df['date'] = pd.to_datetime(df['date'], errors='coerce')
-    invalid_dates = df[df['date'].isnull()]
-    if not invalid_dates.empty:
-        app_logger.error(f"Invalid date formats found in rows: {invalid_dates}")
-        raise ValueError(f"Invalid date format found for some rows: {invalid_dates}")  # Raise error for invalid dates
-
-    df['PM2.5'] = pd.to_numeric(df['PM2.5'], errors='coerce')
-    df['NO2'] = pd.to_numeric(df['NO2'], errors='coerce')
-    df['CO2'] = pd.to_numeric(df['CO2'], errors='coerce')
-
-    invalid_rows = df[df[['PM2.5', 'NO2', 'CO2']].isnull().any(axis=1)]
-    if not invalid_rows.empty:
-        app_logger.error(f"Invalid pollutant values found in rows: {invalid_rows}")
-        raise ValueError(f"Missing or invalid pollutant values for rows: {invalid_rows}")  # Raise error for invalid pollutants
-
-    return df
+import io
+import fastapi
+import pydantic
+from .logging import air_quality_api_logger
+from ..schemas.air_quality import AirQualityBase
+from ..models.air_quality import AirQuality
+import sqlalchemy
+from ..services.calculate_aqi import calculate_aqi
 
 
-def process_csv(file: UploadFile) -> pd.DataFrame:
-    """
-    Process the uploaded CSV file (from an UploadFile object) with pandas.
-    """
+async def process_csv(file: fastapi.UploadFile):
     try:
-        # Read the file's content
+        air_quality_api_logger.info(f"Received file upload: {file.filename}")
+
         contents = await file.read()
-        # Convert the content to a pandas DataFrame (assuming the file is CSV)
-        df = pd.read_csv(StringIO(contents.decode('utf-8')))
+        try:
+            df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
+        except pd.errors.ParserError as e:
+            air_quality_api_logger.error(f"CSV file parsing error for {file.filename}: {str(e)}")
+            raise ValueError(f"The file '{file.filename}' could not be parsed. Check the file format.")
 
-        # Validate the data
-        validated_df = validate_data(df)
+        records = []
 
-        if validated_df.empty:
-            logger.error("No valid data in the file.")
-            raise ValueError("No valid data found after validation.")  # Raise error if no valid data
+        for _, row in df.iterrows():
+            try:
+                record = AirQualityBase(
+                    date=row['date'],
+                    city=row['city'],
+                    pm2_5=row['PM2.5'],
+                    no2=row['NO2'],
+                    co2=row['CO2'],
+                )
+                records.append(record)
 
-        logger.info(f"Successfully processed {len(validated_df)} rows.")
-        return validated_df
+            except pydantic.ValidationError as e:
+                air_quality_api_logger.error(f"Validation error for row: {row}, error: {str(e)}")
+                continue
 
-    except pd.errors.ParserError as e:
-        logger.error(f"CSV file parsing error: {str(e)}")
-        raise ValueError("The file could not be parsed. Please check the file format.")  # Handle invalid CSV format
-    except ValueError as e:
-        logger.error(f"Value error: {str(e)}")
-        raise ValueError(f"Data validation error: {str(e)}")  # Catch validation errors
+        if not records:
+            air_quality_api_logger.error(f"No valid data found after processing file: {file.filename}.")
+            raise ValueError("No valid data found after processing the file.")
+
+        air_quality_api_logger.info(
+            f"Successfully processed {len(records)} rows from {file.filename}")
+
+        return records
+
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}")
-        raise RuntimeError("An unexpected error occurred while processing the file.")  # Handle other unexpected errors
+        air_quality_api_logger.error(f"Unexpected error while processing file {file.filename}: {str(e)}")
+        raise RuntimeError(f"An unexpected error occurred while processing the file '{file.filename}'.")
+
+
+async def add_records_to_db(records: list, db_session: sqlalchemy.orm.Session):
+    try:
+        air_quality_api_logger.info(f"Attempting to add {len(records)} records to the database.")
+
+        db_records = []
+
+        for record in records:
+            aqi, aqi_level = calculate_aqi(record.pm2_5, record.no2, record.co2)
+
+            air_quality_api_logger.info(
+                f"Calculated AQI for City: {record.city}, Date: {record.date} - "
+                f"PM2.5: {record.pm2_5}, NO2: {record.no2}, CO2: {record.co2}, "
+                f"AQI: {aqi}, AQI Level: {aqi_level}"
+            )
+
+            db_record = AirQuality(
+                date=record.date,
+                city=record.city,
+                pm2_5=record.pm2_5,
+                no2=record.no2,
+                co2=record.co2,
+                aqi=aqi,
+                aqi_level=aqi_level,
+            )
+            db_records.append(db_record)
+
+        db_session.bulk_save_objects(db_records)
+        db_session.commit()
+
+        air_quality_api_logger.info(f"Successfully added {len(db_records)} records to the database.")
+
+    except Exception as e:
+        db_session.rollback()
+        air_quality_api_logger.error(f"Error while adding {len(records)} records to the database: {str(e)}")
+        raise RuntimeError("Failed to add records to the database.")
