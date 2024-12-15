@@ -22,7 +22,8 @@ def get_air_quality_by_date_range(
 
         if not records:
             air_quality_api_logger.warning(
-                f"No air quality data found for the range {start_date} to {end_date}.")
+                f"No air quality data found for the range {start_date} to {end_date}."
+            )
 
             raise fastapi.HTTPException(
                 status_code=404,
@@ -32,7 +33,9 @@ def get_air_quality_by_date_range(
                 }
             )
 
-        return {"data": records}
+        air_quality_api_logger.info(
+            f"Successfully fetched {len(records)} air quality records from {start_date} to {end_date}.")
+        return records
 
     except Exception as error:
         air_quality_api_logger.error(f"Error fetching air quality data: {str(error)}")
@@ -62,7 +65,8 @@ def get_air_quality_by_city(city: str, db: sqlalchemy.orm.Session):
                 }
             )
 
-        return {"data": records}
+        air_quality_api_logger.info(f"Successfully fetched {len(records)} air quality records for city {city}.")
+        return records
 
     except Exception as error:
         air_quality_api_logger.error(f"Error fetching air quality data for city {city}: {str(error)}")
@@ -97,12 +101,14 @@ def get_city_aqi_history(city: str, db: sqlalchemy.orm.Session):
                 }
             )
 
+        air_quality_api_logger.info(f"Successfully fetched AQI history for city {city}.")
         return {
             "data": {
                 "city": city,
                 "history": [{
                     "date": record.date, "aqi": record.aqi, "aqi_level": record.aqi_level} for record in records
-                ]}
+                ]
+            }
         }
 
     except Exception as error:
@@ -137,7 +143,8 @@ def get_city_aqi_average(city: str, db: sqlalchemy.orm.Session):
                 }
             )
 
-        return {"data": {"city": city, "average_aqi": avg_aqi}}
+        air_quality_api_logger.info(f"Successfully fetched AQI average for city {city}: {avg_aqi[0]}.")
+        return {"data": {"city": city, "average_aqi": avg_aqi[0]}}
 
     except Exception as error:
         air_quality_api_logger.error(f"Error fetching AQI average for city {city}: {str(error)}")
@@ -173,9 +180,10 @@ def get_best_cities(db: sqlalchemy.orm.Session):
                 }
             )
 
+        air_quality_api_logger.info(f"Successfully fetched the top 3 cities based on AQI.")
         return {
             "data": {
-                "best_cities": [{"city": city.city, "average_aqi": city.avg_aqi} for city in cities]
+                "best_cities": [{"city": city.city, "average_aqi": city.average_aqi} for city in cities]
             }
         }
 

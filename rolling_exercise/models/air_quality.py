@@ -1,6 +1,6 @@
 import sqlalchemy
 
-Base = sqlalchemy.orm.declarative_base()
+from rolling_exercise.database.session import Base
 
 
 class AirQuality(Base):

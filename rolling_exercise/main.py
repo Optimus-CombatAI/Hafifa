@@ -1,14 +1,14 @@
 import fastapi
-import sqlalchemy
 
 from rolling_exercise.routers.air_quality import air_quality_router
 from rolling_exercise.routers.alert import alerts_router
 from rolling_exercise.utils.logging import air_quality_api_logger
 from rolling_exercise.database.session import engine
+from rolling_exercise.database.session import Base
 
 app = fastapi.FastAPI()
 
-sqlalchemy.orm.declarative_base().metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 app.include_router(air_quality_router)
 app.include_router(alerts_router)

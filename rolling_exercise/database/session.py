@@ -1,9 +1,10 @@
-import sqlalchemy
-
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base
 from rolling_exercise.config import settings
 
-engine = sqlalchemy.create_engine(settings.DATABASE_URL)
+Base = declarative_base()
+engine = create_engine(settings.DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
