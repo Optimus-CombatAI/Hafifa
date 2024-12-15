@@ -150,8 +150,8 @@ def get_city_aqi_average(city: str, db: sqlalchemy.orm.Session):
             .one()
         )
 
-        air_quality_api_logger.info(f"Successfully fetched AQI average for city {city}: {avg_aqi[0]}.")
-        return {"data": {"city": city, "average_aqi": avg_aqi[0]}}
+        air_quality_api_logger.info(f"Successfully fetched AQI average for city {city}: {avg_aqi}.")
+        return {"data": {"city": city, "average_aqi": avg_aqi}}
 
     except NoResultFound:
         air_quality_api_logger.warning(f"No AQI data found for city {city}.")
@@ -173,6 +173,7 @@ def get_city_aqi_average(city: str, db: sqlalchemy.orm.Session):
                 "message": f"Failed to fetch AQI average for city {city}."
             }
         )
+
 
 
 def get_best_cities(db: sqlalchemy.orm.Session):

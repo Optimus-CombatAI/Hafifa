@@ -138,14 +138,14 @@ def test_get_city_aqi_average():
     mock_db = get_mock_db_session()
     city = 'TestCity'
 
-    mock_avg = [(55.5,)]
+    mock_avg = 55.5
     mock_db.query.return_value.filter.return_value.one.return_value = mock_avg
 
     result = get_city_aqi_average(city, mock_db)
 
     assert 'data' in result
     assert result['data']['city'] == city
-    assert result['data']['average_aqi'] == 55.5
+    assert result['data']['average_aqi'] == mock_avg
 
 
 def test_get_city_aqi_average_no_records():
