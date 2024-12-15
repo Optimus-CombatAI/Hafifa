@@ -1,5 +1,5 @@
 import logging
-from ..config import settings
+from rolling_exercise.config import settings
 
 
 def setup_logger():

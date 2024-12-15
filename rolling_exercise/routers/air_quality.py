@@ -3,9 +3,9 @@ import sqlalchemy
 import datetime as dt
 import typing
 
-from ..database.session import get_db
-from ..schemas.air_quality import AirQualityResponse
-from ..crud.air_quality import (
+from rolling_exercise.database.session import get_db
+from rolling_exercise.schemas.air_quality import AirQualityResponse
+from rolling_exercise.crud.air_quality import (
     get_air_quality_by_date_range,
     get_air_quality_by_city,
     get_city_aqi_history,

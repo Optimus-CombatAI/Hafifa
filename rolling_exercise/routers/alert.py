@@ -3,9 +3,9 @@ import sqlalchemy
 import datetime as dt
 import typing
 
-from ..database.session import get_db
-from ..schemas.alert import AlertResponse
-from ..crud.alert import (
+from rolling_exercise.database.session import get_db
+from rolling_exercise.schemas.alert import AlertResponse
+from rolling_exercise.crud.alert import (
     get_all_alerts,
     get_alerts_by_date,
     get_alerts_by_city,

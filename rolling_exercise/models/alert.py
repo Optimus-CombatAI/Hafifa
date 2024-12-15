@@ -1,6 +1,6 @@
 import sqlalchemy
 
-Base = sqlalchemy.ext.declarative.declarative_base()
+Base = sqlalchemy.orm.declarative_base()
 
 
 class Alert(Base):

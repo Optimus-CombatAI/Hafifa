@@ -2,8 +2,8 @@ import sqlalchemy
 import fastapi
 import datetime as dt
 
-from ..models.alert import Alert
-from ..utils.logging import air_quality_api_logger
+from rolling_exercise.models.alert import Alert
+from rolling_exercise.utils.logging import air_quality_api_logger
 
 
 def get_all_alerts(db: sqlalchemy.orm.Session):

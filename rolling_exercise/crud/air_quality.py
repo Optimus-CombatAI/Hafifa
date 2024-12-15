@@ -2,8 +2,8 @@ import sqlalchemy
 import fastapi
 import datetime as dt
 
-from ..models.air_quality import AirQuality
-from ..utils.logging import air_quality_api_logger
+from rolling_exercise.models.air_quality import AirQuality
+from rolling_exercise.utils.logging import air_quality_api_logger
 
 
 def get_air_quality_by_date_range(
