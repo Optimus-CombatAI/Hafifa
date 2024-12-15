@@ -9,7 +9,7 @@ class AlertBase(pydantic.BaseModel):
     aqi_level: str
 
 
-class Alert(AlertBase):
+class AlertResponse(AlertBase):
     id: int
 
     class Config:
