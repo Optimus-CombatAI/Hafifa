@@ -2,6 +2,8 @@ import sqlalchemy
 import fastapi
 import datetime as dt
 
+from sqlalchemy.exc import NoResultFound
+
 from rolling_exercise.models.air_quality import AirQuality
 from rolling_exercise.utils.logging import air_quality_api_logger
 
@@ -14,6 +16,18 @@ def get_air_quality_by_date_range(
     try:
         air_quality_api_logger.info(f"Fetching air quality data from {start_date} to {end_date}.")
 
+        if start_date > end_date:
+            raise fastapi.HTTPException(
+                status_code=422,
+                detail={"status": "error", "message": "Start date cannot be after end date"}
+            )
+
+        if not isinstance(start_date, dt.date) or not isinstance(end_date, dt.date):
+            raise fastapi.HTTPException(
+                status_code=422,
+                detail={"status": "error", "message": "Invalid date format"}
+            )
+
         records = (
             db.query(AirQuality)
             .filter(AirQuality.date >= start_date, AirQuality.date <= end_date)
@@ -24,7 +38,6 @@ def get_air_quality_by_date_range(
             air_quality_api_logger.warning(
                 f"No air quality data found for the range {start_date} to {end_date}."
             )
-
             raise fastapi.HTTPException(
                 status_code=404,
                 detail={
@@ -34,8 +47,15 @@ def get_air_quality_by_date_range(
             )
 
         air_quality_api_logger.info(
-            f"Successfully fetched {len(records)} air quality records from {start_date} to {end_date}.")
+            f"Successfully fetched {len(records)} air quality records from {start_date} to {end_date}."
+        )
+
         return records
+
+    except fastapi.HTTPException as http_error:
+        air_quality_api_logger.error(f"HTTPException occurred: {http_error.status_code} - {http_error.detail}")
+
+        raise http_error
 
     except Exception as error:
         air_quality_api_logger.error(f"Error fetching air quality data: {str(error)}")
@@ -56,7 +76,6 @@ def get_air_quality_by_city(city: str, db: sqlalchemy.orm.Session):
 
         if not records:
             air_quality_api_logger.warning(f"No air quality data found for city {city}.")
-
             raise fastapi.HTTPException(
                 status_code=404,
                 detail={
@@ -67,10 +86,10 @@ def get_air_quality_by_city(city: str, db: sqlalchemy.orm.Session):
 
         air_quality_api_logger.info(f"Successfully fetched {len(records)} air quality records for city {city}.")
         return records
-
+    except fastapi.HTTPException as http_error:
+        raise http_error
     except Exception as error:
         air_quality_api_logger.error(f"Error fetching air quality data for city {city}: {str(error)}")
-
         raise fastapi.HTTPException(
             status_code=500,
             detail={
@@ -92,7 +111,6 @@ def get_city_aqi_history(city: str, db: sqlalchemy.orm.Session):
 
         if not records:
             air_quality_api_logger.warning(f"No AQI history found for city {city}.")
-
             raise fastapi.HTTPException(
                 status_code=404,
                 detail={
@@ -110,10 +128,10 @@ def get_city_aqi_history(city: str, db: sqlalchemy.orm.Session):
                 ]
             }
         }
-
+    except fastapi.HTTPException as http_error:
+        raise http_error
     except Exception as error:
         air_quality_api_logger.error(f"Error fetching AQI history for city {city}: {str(error)}")
-
         raise fastapi.HTTPException(
             status_code=500,
             detail={
@@ -132,23 +150,22 @@ def get_city_aqi_average(city: str, db: sqlalchemy.orm.Session):
             .one()
         )
 
-        if avg_aqi is None:
-            air_quality_api_logger.warning(f"No AQI data found for city {city}.")
-
-            raise fastapi.HTTPException(
-                status_code=404,
-                detail={
-                    "status": "error",
-                    "message": f"No AQI data found for city {city}."
-                }
-            )
-
         air_quality_api_logger.info(f"Successfully fetched AQI average for city {city}: {avg_aqi[0]}.")
         return {"data": {"city": city, "average_aqi": avg_aqi[0]}}
 
+    except NoResultFound:
+        air_quality_api_logger.warning(f"No AQI data found for city {city}.")
+        raise fastapi.HTTPException(
+            status_code=404,
+            detail={
+                "status": "error",
+                "message": f"No AQI data found for city {city}."
+            }
+        )
+    except fastapi.HTTPException as http_error:
+        raise http_error
     except Exception as error:
         air_quality_api_logger.error(f"Error fetching AQI average for city {city}: {str(error)}")
-
         raise fastapi.HTTPException(
             status_code=500,
             detail={
@@ -171,7 +188,6 @@ def get_best_cities(db: sqlalchemy.orm.Session):
 
         if not cities:
             air_quality_api_logger.warning("No cities found with AQI data.")
-
             raise fastapi.HTTPException(
                 status_code=404,
                 detail={
@@ -186,10 +202,10 @@ def get_best_cities(db: sqlalchemy.orm.Session):
                 "best_cities": [{"city": city.city, "average_aqi": city.average_aqi} for city in cities]
             }
         }
-
+    except fastapi.HTTPException as http_error:
+        raise http_error
     except Exception as error:
         air_quality_api_logger.error(f"Error fetching best cities: {str(error)}")
-
         raise fastapi.HTTPException(
             status_code=500,
             detail={
