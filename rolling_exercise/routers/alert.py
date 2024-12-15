@@ -25,7 +25,7 @@ async def get_all_alerts(db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
         raise error
 
 
-@alerts_router.post("/date", response_model=typing.List[AlertResponse])
+@alerts_router.get("/date", response_model=typing.List[AlertResponse])
 async def get_alerts_by_date(date: dt.date, db: sqlalchemy.orm.Session = fastapi.Depends(get_db)):
     try:
         alerts = get_alerts_by_date(date, db)

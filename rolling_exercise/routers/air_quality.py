@@ -13,11 +13,12 @@ from rolling_exercise.crud.air_quality import (
     get_best_cities,
 )
 
-from ..utils.upload import process_csv, add_records_to_db
+from rolling_exercise.utils.upload import process_csv, add_records_to_db
 
 air_quality_router = fastapi.APIRouter(prefix="/air_quality", tags=["air_quality"])
 
 
+@air_quality_router.post("/upload_air_quality_csv")
 async def upload_air_quality_csv(
     file: fastapi.UploadFile = fastapi.File(...),
     db: sqlalchemy.orm.Session = fastapi.Depends(get_db)
