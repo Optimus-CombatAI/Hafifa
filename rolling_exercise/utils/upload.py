@@ -17,9 +17,15 @@ HIGH_AQI_THRESHOLD = 300
 
 def read_csv_file(file_contents: bytes, filename: str):
     try:
-        return pd.read_csv(io.StringIO(file_contents.decode(DEFAULT_ENCODING)))
-    except pd.errors.ParserError as error:
+        df = pd.read_csv(io.StringIO(file_contents.decode(DEFAULT_ENCODING)))
+
+        if df.empty or df.isnull().all().any():
+            raise pd.errors.ParserError("CSV file is empty or contains only null values")
+
+        return df
+    except (pd.errors.ParserError, ValueError) as error:
         air_quality_api_logger.error(f"CSV file parsing error for {filename}: {str(error)}")
+
         raise fastapi.HTTPException(
             status_code=400,
             detail={
@@ -62,6 +68,7 @@ async def process_csv(file: fastapi.UploadFile):
 
         if not records:
             air_quality_api_logger.error(f"No valid data found after processing file: {file.filename}.")
+
             raise fastapi.HTTPException(
                 status_code=400,
                 detail={
@@ -75,9 +82,12 @@ async def process_csv(file: fastapi.UploadFile):
         return records, validation_errors
 
     except fastapi.HTTPException as error:
+
         raise error
+
     except Exception as error:
         air_quality_api_logger.error(f"Unexpected error while processing file {file.filename}: {str(error)}")
+
         raise fastapi.HTTPException(
             status_code=500,
             detail={
