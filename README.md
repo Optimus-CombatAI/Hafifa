@@ -25,25 +25,44 @@ Happy learning!🤍
 ---
 
 ## Table of Contents
-1. [Git](#1-git)
-2. [Clean Code](#2-clean-code)
-3. [Web Scraping](#3-web-scraping)
-4. [Threading and MultiProcessing](#4-threading-and-multiprocessing)
-5. [Databases](#5-databases)  
-  5.1. [PostgreSQL](#51-postgresql)  
-  5.2. [MongoDB](#52-mongodb)  
-  5.3. [S3](#53-s3)  
-  5.4. [Redis](#54-redis)  
-6. [Building API](#6-api)  
-  6.1 [FastAPI](#61-fastapi)  
-  6.2 [SQLAlchemy](#62-sqlalchemy)  
-7. [Testing](#7-testing)
-8. [Useful Python Libraries](#8-python-libraries)
-9. [Rolling Exercise](#9-rolling-exercise)
-10. [Data Engineering](#10-data-engineering)
-11. [Kafka](#11-kafka)
-12. [Splunk](#12-splunk)
-13. [Trino](#13-trino)
+- [Data Engineering Onboarding \& Learning Plan](#data-engineering-onboarding--learning-plan)
+  - [Submitting Your Exercises](#submitting-your-exercises)
+  - [Questions and Support](#questions-and-support)
+  - [Table of Contents](#table-of-contents)
+  - [1. Git](#1-git)
+    - [Duration: 1 Day](#duration-1-day)
+  - [2. Clean Code](#2-clean-code)
+    - [Duration: 1 Day](#duration-1-day-1)
+  - [3. Web Scraping](#3-web-scraping)
+    - [Duration: 1 Day](#duration-1-day-2)
+  - [4. Threading and MultiProcessing](#4-threading-and-multiprocessing)
+    - [Duration: 2 Days](#duration-2-days)
+  - [5. Databases](#5-databases)
+    - [Duration: 1 Day](#duration-1-day-3)
+      - [5.1. PostgreSQL](#51-postgresql)
+      - [5.2. MongoDB](#52-mongodb)
+      - [5.3. S3](#53-s3)
+      - [5.4. Redis](#54-redis)
+  - [6. Building API](#6-building-api)
+    - [Duration: 0.5 Day](#duration-05-day)
+      - [6.1. FastAPI](#61-fastapi)
+      - [6.2. SQLAlchemy](#62-sqlalchemy)
+  - [7. Testing](#7-testing)
+    - [Duration: 0.5 Days](#duration-05-days)
+  - [8. Useful Python Libraries](#8-useful-python-libraries)
+    - [Duration: 1 Day](#duration-1-day-4)
+  - [9. Rolling Exercise](#9-rolling-exercise)
+    - [Duration: 5 Days](#duration-5-days)
+  - [10. Data Engineering](#10-data-engineering)
+    - [Duration: 1 Hour](#duration-1-hour)
+  - [11. Kafka🩷](#11-kafka)
+    - [Duration: 1 Hour](#duration-1-hour-1)
+  - [12. Splunk](#12-splunk)
+    - [Duration: 1 Hour](#duration-1-hour-2)
+  - [13. Data Warehouse \\ Data Lake](#13-data-warehouse--data-lake)
+    - [Duration: 1 Day](#duration-1-day-5)
+  - [14. Trino](#14-trino)
+    - [Duration: 0.5 Hour](#duration-05-hour)
    
 ---
 
@@ -201,7 +220,25 @@ If you feel that you don't understand it enough, you are more than welcome to re
 
 ---
 
-## 13. Trino
+## 13. Data Warehouse \ Data Lake
+
+### Duration: 1 Day
+
+- [OLAP vs OLTP](https://youtu.be/iw-5kFzIdgY?si=do71e86y3TqNCbxQ)
+- [More on OLAP vs OLTP](https://www.geeksforgeeks.org/dbms/difference-between-olap-and-oltp-in-dbms/)
+- [Databases vs Datawarehouses vs Datalakes](https://youtu.be/-bSkREem8dM?si=CfTmfdbV9wja5BWS)
+- [Hive Introduction](https://youtu.be/cMziv1iYt28?si=chzEEPKILW-2Ovow)
+- [Iceberg Introduction](https://youtu.be/TsmhRZElPvM?si=V8tvEUZhRCEIlq8G)
+- [Why Iceberg](https://vutr.substack.com/p/why-do-we-need-open-table-formats?utm_source=post-email-title&publication_id=1930705&post_id=164015666&utm_campaign=email-post-title&isFreemail=true&r=57ujs9&triedRedirect=true)
+- [A bit more on iceberg benefits](https://iceberg.apache.org/)
+- [Big Data File Formats](https://www.upsolver.com/blog/the-file-format-fundamentals-of-big-data)
+- [Why Parquet](https://luminousmen.substack.com/p/why-parquet-is-the-go-to-format-for?utm_source=cross-post&publication_id=1936637&post_id=163835393&utm_campaign=1930705&isFreemail=true&r=57ujs9&triedRedirect=true)
+- [Parquet File](https://youtu.be/1j8SdS7s_NY?si=HOXHepdPRATRnjNm)
+- [More on Partitioning](https://vutr.substack.com/p/partitioning-and-clustering?utm_source=post-email-title&publication_id=1930705&post_id=166732941&utm_campaign=email-post-title&isFreemail=true&r=57ujs9&triedRedirect=true&utm_medium=email)
+
+---
+
+## 14. Trino
 
 ### Duration: 0.5 Hour
 
