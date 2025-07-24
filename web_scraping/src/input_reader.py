@@ -39,4 +39,5 @@ class FileLineReader(InputReader):
             if not lines:
                 raise FileNotFoundError
             for line in lines:
+                line = line[:-1]
                 yield line
