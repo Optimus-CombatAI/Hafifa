@@ -1,8 +1,10 @@
 from src.html_extractor import RequestsHTMLExtractor
 from src.html_parser import SoupHTMLParser
 from src.screenshot import HTMLWebShotEngine
-from consts import SCREENSHOT_NAME, OUTPUT_PATH
+from consts import SCREENSHOT_NAME, OUTPUT_PATH, OUTPUT_JSON_FILE_NAME
+from src.scraping_data import ScrapingData
 from pathlib import Path
+from json import dump
 
 
 class WebScraper:
@@ -16,11 +18,12 @@ class WebScraper:
     def scrape(self):
         save_path: Path = self.__create_output_path()
 
-        result = dict()
-        result['html'] = self.extractor.get_html()
-        result['resources'] = self.url_parser(result['html']).get_all_urls()
-        self.screenshot = self.screenshot_engine.take_screenshot(
-            self.url, save_path / SCREENSHOT_NAME)
+        result = ScrapingData()
+
+        result.html = self.extractor.get_html()
+        result.resources = self.url_parser(result.html).get_all_urls()
+        result.set_screenshot(self.screenshot_engine.take_screenshot(
+            self.url, save_path / SCREENSHOT_NAME))
 
         self.__save_output(result)
 
@@ -33,10 +36,15 @@ class WebScraper:
 
         return Path(path)
 
-    def __save_output(self, output: dict):
-        pass
+    def __save_output(self, output: ScrapingData):
+        fixed_url = self.__fix_path_name_of_url(self.url)
+        path = Path(OUTPUT_PATH) / Path(fixed_url) / \
+            Path(OUTPUT_JSON_FILE_NAME)
+        with open(path, 'w') as file:
+            data = output.model_dump()
+            dump(data, file, ensure_ascii=False)
 
-    @staticmethod
+    @ staticmethod
     def __fix_path_name_of_url(url: str) -> str:
         """
             this function takes the http://url and only given the url

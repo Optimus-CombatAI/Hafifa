@@ -1,4 +1,4 @@
 INPUT_FILE = './input/urls.input'
 SCREENSHOT_NAME = 'screenshot.png'
 OUTPUT_PATH = './output/'
-OUTPUT_JSON_FILE_NAME = 'browser.json'
+OUTPUT_JSON_FILE_NAME = './browser.json'
