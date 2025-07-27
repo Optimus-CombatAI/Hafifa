@@ -1,10 +1,16 @@
+from concurrent.futures import ThreadPoolExecutor
 from src.input_reader import FileLineReader
 from src.scraper import WebScraper
 from consts import INPUT_FILE, SCREENSHOT_NAME
 
+
+def scrape_url(url):
+    scraper = WebScraper(url)
+    return scraper.scrape()
+
+
 input = FileLineReader(INPUT_FILE)
 urls = input.get_input()
 
-for url in urls:
-    scraper = WebScraper(url)
-    result = scraper.scrape()
+with ThreadPoolExecutor() as executor:
+    results = list(executor.map(scrape_url, urls))
