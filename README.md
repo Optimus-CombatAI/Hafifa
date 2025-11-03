@@ -227,8 +227,10 @@ If you feel that you don't understand it enough, you are more than welcome to re
 ### File Formasts
 - [Big Data File Formats](https://www.upsolver.com/blog/the-file-format-fundamentals-of-big-data)
 - [Avro File Format](https://sqream.com/blog/a-detailed-introduction-to-the-avro-data-format/)
+- [ORC File Format](https://www.youtube.com/watch?v=IX5ElplseUY)
 - [Why Parquet](https://luminousmen.substack.com/p/why-parquet-is-the-go-to-format-for?utm_source=cross-post&publication_id=1936637&post_id=163835393&utm_campaign=1930705&isFreemail=true&r=57ujs9&triedRedirect=true)
 - [Parquet File](https://youtu.be/1j8SdS7s_NY?si=HOXHepdPRATRnjNm)
+- [Schema Evolution](https://www.linkedin.com/pulse/schema-evolution-avro-orc-parquet-detailed-approach-aniket-kulkarni-z7zpf/)
 
 ### Other
 
