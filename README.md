@@ -224,6 +224,11 @@ If you feel that you don't understand it enough, you are more than welcome to re
 
 ### Duration: 2 Days
 
+### OLAP VS OLTP
+- [OLAP vs OLTP](https://youtu.be/iw-5kFzIdgY?si=do71e86y3TqNCbxQ)
+- [More on OLAP vs OLTP](https://www.geeksforgeeks.org/dbms/difference-between-olap-and-oltp-in-dbms/)
+- [Databases vs Datawarehouses vs Datalakes](https://youtu.be/-bSkREem8dM?si=CfTmfdbV9wja5BWS)
+
 ### File Formasts
 - [Big Data File Formats](https://www.upsolver.com/blog/the-file-format-fundamentals-of-big-data)
 - [Avro File Format](https://sqream.com/blog/a-detailed-introduction-to-the-avro-data-format/)
@@ -232,17 +237,16 @@ If you feel that you don't understand it enough, you are more than welcome to re
 - [Parquet File](https://youtu.be/1j8SdS7s_NY?si=HOXHepdPRATRnjNm)
 - [Schema Evolution](https://www.linkedin.com/pulse/schema-evolution-avro-orc-parquet-detailed-approach-aniket-kulkarni-z7zpf/)
 
-### Other
-
-- [OLAP vs OLTP](https://youtu.be/iw-5kFzIdgY?si=do71e86y3TqNCbxQ)
-- [More on OLAP vs OLTP](https://www.geeksforgeeks.org/dbms/difference-between-olap-and-oltp-in-dbms/)
-- [Databases vs Datawarehouses vs Datalakes](https://youtu.be/-bSkREem8dM?si=CfTmfdbV9wja5BWS)
+### Open Table Formats
 - [Hive Introduction](https://youtu.be/cMziv1iYt28?si=chzEEPKILW-2Ovow)
 - [Iceberg Introduction](https://youtu.be/TsmhRZElPvM?si=V8tvEUZhRCEIlq8G)
 - [Why Iceberg](https://vutr.substack.com/p/why-do-we-need-open-table-formats?utm_source=post-email-title&publication_id=1930705&post_id=164015666&utm_campaign=email-post-title&isFreemail=true&r=57ujs9&triedRedirect=true)
 - [How Iceberg Stores Data](https://youtu.be/xfAYLAFCLvM?si=mgZocoUYGFJo9CKp)
 - [A bit more on iceberg benefits](https://iceberg.apache.org/)
 - [More on Iceberg Catalog Mechanics](https://youtu.be/4hcfveg1t70?si=0NhYDRmg6jyGqkQq)
+
+
+### Other
 - [More on Partitioning](https://vutr.substack.com/p/partitioning-and-clustering?utm_source=post-email-title&publication_id=1930705&post_id=166732941&utm_campaign=email-post-title&isFreemail=true&r=57ujs9&triedRedirect=true&utm_medium=email)
 - [Apache Arrow](https://youtu.be/R4BIXbfKBtk?si=-HrXgui3LkQA61Om)
 
