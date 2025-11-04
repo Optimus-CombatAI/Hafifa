@@ -232,6 +232,7 @@ If you feel that you don't understand it enough, you are more than welcome to re
 - [OLAP vs OLTP](https://youtu.be/iw-5kFzIdgY?si=do71e86y3TqNCbxQ)
 - [More on OLAP vs OLTP](https://www.geeksforgeeks.org/dbms/difference-between-olap-and-oltp-in-dbms/)
 - [Databases vs Datawarehouses vs Datalakes](https://youtu.be/-bSkREem8dM?si=CfTmfdbV9wja5BWS)
+- [More On Data Lake VS Warehouse](https://luminousmen.com/post/data-lake-vs-data-warehouse/#data-warehouse/)
 - [Data lakehouse](https://arxiv.org/abs/2310.08697v1) - optional
 
 ### File Formats
