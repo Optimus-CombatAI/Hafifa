@@ -209,6 +209,8 @@ If you feel that you don't understand it enough, you are more than welcome to re
 - [Get To Know the Terms](https://kafka.apache.org/intro#)
 - [Clean Up Policies](https://medium.com/apache-kafka-from-zero-to-hero/apache-kafka-guide-20-log-cleanup-policies-e739cdc91bd8)
 - [Segments](https://docs.conduktor.io/learn/advanced/topics/internals-segments-indexes)
+- [Zookeeper](https://docs.conduktor.io/learn/fundamentals/zookeeper)
+- [KRaft](https://docs.conduktor.io/learn/fundamentals/kraft-mode)
 
 ---
 
