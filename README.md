@@ -203,10 +203,12 @@ If you feel that you don't understand it enough, you are more than welcome to re
 
 ## 11. Kafka🩷
 
-### Duration: 1 Hour
+### Duration: 1 Day
 
 - [Kafka Introduction](https://www.youtube.com/watch?v=Ch5VhJzaoaI&t=284s)
 - [Get To Know the Terms](https://kafka.apache.org/intro#)
+- [Clean Up Policies](https://medium.com/apache-kafka-from-zero-to-hero/apache-kafka-guide-20-log-cleanup-policies-e739cdc91bd8)
+- [Segments](https://docs.conduktor.io/learn/advanced/topics/internals-segments-indexes)
 
 ---
 
