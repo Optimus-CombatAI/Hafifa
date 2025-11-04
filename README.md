@@ -229,7 +229,7 @@ If you feel that you don't understand it enough, you are more than welcome to re
 - [More on OLAP vs OLTP](https://www.geeksforgeeks.org/dbms/difference-between-olap-and-oltp-in-dbms/)
 - [Databases vs Datawarehouses vs Datalakes](https://youtu.be/-bSkREem8dM?si=CfTmfdbV9wja5BWS)
 
-### File Formasts
+### File Formats
 - [Big Data File Formats](https://www.upsolver.com/blog/the-file-format-fundamentals-of-big-data)
 - [Avro File Format](https://sqream.com/blog/a-detailed-introduction-to-the-avro-data-format/)
 - [ORC File Format](https://www.youtube.com/watch?v=IX5ElplseUY)
