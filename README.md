@@ -246,7 +246,6 @@ If you feel that you don't understand it enough, you are more than welcome to re
 ### Open Table Formats
 - [Hive Introduction](https://youtu.be/cMziv1iYt28?si=chzEEPKILW-2Ovow)
 - [Iceberg Introduction](https://youtu.be/TsmhRZElPvM?si=V8tvEUZhRCEIlq8G)
-- [Why Iceberg](https://vutr.substack.com/p/why-do-we-need-open-table-formats?utm_source=post-email-title&publication_id=1930705&post_id=164015666&utm_campaign=email-post-title&isFreemail=true&r=57ujs9&triedRedirect=true)
 - [How Iceberg Stores Data](https://youtu.be/xfAYLAFCLvM?si=mgZocoUYGFJo9CKp)
 - [A bit more on iceberg benefits](https://iceberg.apache.org/)
 - [More on Iceberg Catalog Mechanics](https://youtu.be/4hcfveg1t70?si=0NhYDRmg6jyGqkQq)
