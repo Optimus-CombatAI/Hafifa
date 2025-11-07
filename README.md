@@ -250,6 +250,7 @@ If you feel that you don't understand it enough, you are more than welcome to re
 - [How Iceberg Stores Data](https://youtu.be/xfAYLAFCLvM?si=mgZocoUYGFJo9CKp)
 - [A bit more on iceberg benefits](https://iceberg.apache.org/)
 - [More on Iceberg Catalog Mechanics](https://youtu.be/4hcfveg1t70?si=0NhYDRmg6jyGqkQq)
+- [Detailed talk on iceberg](https://www.youtube.com/watch?v=kJaD0WuQ1Bg) - optional
 
 ### Data Partitioning
 - [More on Partitioning](https://vutr.substack.com/p/partitioning-and-clustering?utm_source=post-email-title&publication_id=1930705&post_id=166732941&utm_campaign=email-post-title&isFreemail=true&r=57ujs9&triedRedirect=true&utm_medium=email)
