@@ -56,7 +56,7 @@ Happy learning!🤍
   - [10. Data Engineering](#10-data-engineering)
     - [Duration: 1 Hour](#duration-1-hour)
   - [11. Kafka🩷](#11-kafka)
-    - [Duration: 1 Hour](#duration-1-hour-1)
+    - [Duration: 4 Hour](#duration-4-hours)
   - [12. Splunk](#12-splunk)
     - [Duration: 1 Hour](#duration-1-hour-2)
   - [13. Data Warehouse \\ Data Lake](#13-data-warehouse--data-lake)
@@ -203,13 +203,13 @@ If you feel that you don't understand it enough, you are more than welcome to re
 
 ## 11. Kafka🩷
 
-### Duration: 1 Day
+### Duration: 4 hours
 
 - [Kafka Introduction](https://www.youtube.com/watch?v=Ch5VhJzaoaI&t=284s)
 - [Get To Know the Terms](https://kafka.apache.org/intro#)
+- [Zookeeper](https://docs.conduktor.io/learn/fundamentals/zookeeper)
 - [Clean Up Policies](https://medium.com/apache-kafka-from-zero-to-hero/apache-kafka-guide-20-log-cleanup-policies-e739cdc91bd8)
 - [Segments](https://docs.conduktor.io/learn/advanced/topics/internals-segments-indexes)
-- [Zookeeper](https://docs.conduktor.io/learn/fundamentals/zookeeper)
 - [KRaft](https://docs.conduktor.io/learn/fundamentals/kraft-mode)
 
 ---
