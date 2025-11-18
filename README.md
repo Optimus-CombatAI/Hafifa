@@ -190,6 +190,8 @@ Inroduction to Redis and learning the syntax
 There is an exercise in the `rolling_exercise/` folder where you'll need to build an API. Follow the instructions provided in the folder.
 
 ---
+# Before the next section please do the Newbies training - DevOps section in the TS
+---
 
 ## 10. Data Engineering
 
