@@ -234,7 +234,6 @@ Kafka Streams is the most popular library for streaming developing. However Kafk
 There is an implementation of Kafka Streams in python named Faust. And yet Faust does not have all the abilities of Kafka Streams and it is not as production ready as Kafka Streams. 
   
 ---
-ת
 
 ## 13. Splunk
 
