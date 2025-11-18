@@ -57,11 +57,13 @@ Happy learning!🤍
     - [Duration: 1 Hour](#duration-1-hour)
   - [11. Kafka🩷](#11-kafka)
     - [Duration: 4 Hour](#duration-4-hours)
-  - [12. Splunk](#12-splunk)
+  - [12. Streaming](#12-streaming)
+     - [Duration: 3 hours](#duration-3-hours)
+  - [13. Splunk](#13-splunk)
     - [Duration: 1 Hour](#duration-1-hour-2)
-  - [13. Data Warehouse \\ Data Lake](#13-data-warehouse--data-lake)
+  - [14. Data Warehouse \\ Data Lake](#14-data-warehouse--data-lake)
     - [Duration: 2 Days](#duration-2-days-1)
-  - [14. Trino](#14-trino)
+  - [15. Trino](#15-trino)
     - [Duration: 0.5 Hour](#duration-05-hour)
    
 ---
@@ -214,7 +216,25 @@ If you feel that you don't understand it enough, you are more than welcome to re
 
 ---
 
-## 12. Splunk
+## 12. Streaming
+
+### Duration: 3 Hours
+
+- [What is streaming](https://www.oreilly.com/radar/the-world-beyond-batch-streaming-101/)
+- [RocksDB](https://getstream.io/blog/rocksdb-fundamentals/)
+- [Kafka Streams option 1](https://www.instaclustr.com/blog/kafka-streams-guide/) - optional
+- [Kafka Streams option 2](https://www.baeldung.com/java-kafka-streams) - optional
+- [Kafka Streams official tutorial](https://kafka.apache.org/documentation/streams/) - optional
+- [What is Faust](https://medium.com/data-science/stream-processing-with-python-kafka-faust-a11740d0910c) - optional
+- [Official Docs Faust](https://faust.readthedocs.io/en/latest/) - optional
+
+Kafka Streams is the most popular library for streaming developing. However Kafka Streams a java library.
+There is an implementation of Kafka Streams in python named Faust. And yet Faust does not have all the abilities of Kafka Streams and it is not as production ready as Kafka Streams. 
+  
+---
+ת
+
+## 13. Splunk
 
 ### Duration: 1 Hour
 
@@ -224,7 +244,7 @@ If you feel that you don't understand it enough, you are more than welcome to re
 
 ---
 
-## 13. Data Warehouse \ Data Lake
+## 14. Data Warehouse \ Data Lake
 
 ### Duration: 2 Days
 
@@ -261,7 +281,7 @@ If you feel that you don't understand it enough, you are more than welcome to re
 
 ---
 
-## 14. Trino
+## 15. Trino
 
 ### Duration: 0.5 Hour
 
