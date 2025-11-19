@@ -147,7 +147,7 @@ Inroduction to Redis and learning the syntax
 
 ### Duration: 5 hours
 
--[SQL Challange](https://mystery.knightlab.com/)
+- [SQL Challenge](https://mystery.knightlab.com/)
 
 ---
 
