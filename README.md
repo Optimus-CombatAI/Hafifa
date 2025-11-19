@@ -43,25 +43,29 @@ Happy learning!🤍
       - [5.2. MongoDB](#52-mongodb)
       - [5.3. S3](#53-s3)
       - [5.4. Redis](#54-redis)
-  - [6. Building API](#6-building-api)
+  - [6. SQL](#6-sql)
+    - [Duration: 5 hours](#duration-5-hours)
+  - [7. Building API](#7-building-api)
     - [Duration: 0.5 Day](#duration-05-day)
-      - [6.1. FastAPI](#61-fastapi)
-      - [6.2. SQLAlchemy](#62-sqlalchemy)
-  - [7. Testing](#7-testing)
+      - [7.1. FastAPI](#71-fastapi)
+      - [7.2. SQLAlchemy](#72-sqlalchemy)
+  - [8. Testing](#8-testing)
     - [Duration: 0.5 Days](#duration-05-days)
-  - [8. Useful Python Libraries](#8-useful-python-libraries)
+  - [9. Useful Python Libraries](#9-useful-python-libraries)
     - [Duration: 1 Day](#duration-1-day-4)
-  - [9. Rolling Exercise](#9-rolling-exercise)
+  - [10. Rolling Exercise](#10-rolling-exercise)
     - [Duration: 5 Days](#duration-5-days)
-  - [10. Data Engineering](#10-data-engineering)
+  - [11. Data Engineering](#11-data-engineering)
     - [Duration: 1 Hour](#duration-1-hour)
-  - [11. Kafka🩷](#11-kafka)
-    - [Duration: 1 Hour](#duration-1-hour-1)
-  - [12. Splunk](#12-splunk)
+  - [12. Kafka🩷](#12-kafka)
+    - [Duration: 4 Hour](#duration-4-hours)
+  - [13. Streaming](#13-streaming)
+     - [Duration: 3 hours](#duration-3-hours)
+  - [14. Splunk](#14-splunk)
     - [Duration: 1 Hour](#duration-1-hour-2)
-  - [13. Data Warehouse \\ Data Lake](#13-data-warehouse--data-lake)
+  - [15. Data Warehouse \\ Data Lake](#15-data-warehouse--data-lake)
     - [Duration: 2 Days](#duration-2-days-1)
-  - [14. Trino](#14-trino)
+  - [16. Trino](#16-trino)
     - [Duration: 0.5 Hour](#duration-05-hour)
    
 ---
@@ -139,13 +143,21 @@ Inroduction to Redis and learning the syntax
 
 ---
 
-## 6. Building API
+## 6. SQL
+
+### Duration: 5 hours
+
+- [SQL Challenge](https://mystery.knightlab.com/)
+
+---
+
+## 7. Building API
 
 ### Duration: 0.5 Day
 
 **Learning Material**:
 
-#### 6.1. FastAPI
+#### 7.1. FastAPI
 - [FastAPI Explanation](https://youtu.be/iWS9ogMPOI0?si=HPv_xetY7HGfOxPK)
 - [FastAPI Syntax Guide](https://fastapi.tiangolo.com/tutorial/first-steps/)
 
@@ -155,12 +167,12 @@ Inroduction to Redis and learning the syntax
   - "Handling Errors"
   - "Debugging"
 
-#### 6.2. SQLAlchemy
+#### 7.2. SQLAlchemy
 - [SQLAlchemy Documentation](https://www.tutorialspoint.com/sqlalchemy/sqlalchemy_introduction.htm)
 
 ---
 
-## 7. Testing
+## 8. Testing
 
 ### Duration: 0.5 Days
 
@@ -171,7 +183,7 @@ Inroduction to Redis and learning the syntax
 
 ---
 
-## 8. Useful Python Libraries
+## 9. Useful Python Libraries
 
 ### Duration: 1 Day
 
@@ -181,15 +193,17 @@ Inroduction to Redis and learning the syntax
 
 ---
 
-## 9. Rolling Exercise
+## 10. Rolling Exercise
 
 ### Duration: 5 Days
 
 There is an exercise in the `rolling_exercise/` folder where you'll need to build an API. Follow the instructions provided in the folder.
 
 ---
+# Before the next section please do the Newbies training - DevOps section in the TS
+---
 
-## 10. Data Engineering
+## 11. Data Engineering
 
 ### Duration: 1 Hour
 
@@ -201,16 +215,37 @@ If you feel that you don't understand it enough, you are more than welcome to re
 
 ---
 
-## 11. Kafka🩷
+## 12. Kafka🩷
 
-### Duration: 1 Hour
+### Duration: 4 hours
 
 - [Kafka Introduction](https://www.youtube.com/watch?v=Ch5VhJzaoaI&t=284s)
 - [Get To Know the Terms](https://kafka.apache.org/intro#)
+- [Zookeeper](https://docs.conduktor.io/learn/fundamentals/zookeeper)
+- [Clean Up Policies](https://medium.com/apache-kafka-from-zero-to-hero/apache-kafka-guide-20-log-cleanup-policies-e739cdc91bd8)
+- [Segments](https://docs.conduktor.io/learn/advanced/topics/internals-segments-indexes)
+- [KRaft](https://docs.conduktor.io/learn/fundamentals/kraft-mode)
 
 ---
 
-## 12. Splunk
+## 13. Streaming
+
+### Duration: 3 Hours
+
+- [What is streaming](https://www.oreilly.com/radar/the-world-beyond-batch-streaming-101/)
+- [RocksDB](https://getstream.io/blog/rocksdb-fundamentals/)
+- [Kafka Streams option 1](https://www.instaclustr.com/blog/kafka-streams-guide/) - optional
+- [Kafka Streams option 2](https://www.baeldung.com/java-kafka-streams) - optional
+- [Kafka Streams official tutorial](https://kafka.apache.org/documentation/streams/) - optional
+- [What is Faust](https://medium.com/data-science/stream-processing-with-python-kafka-faust-a11740d0910c) - optional
+- [Official Docs Faust](https://faust.readthedocs.io/en/latest/) - optional
+
+Kafka Streams is the most popular library for streaming developing. However Kafka Streams a java library.
+There is an implementation of Kafka Streams in python named Faust. And yet Faust does not have all the abilities of Kafka Streams and it is not as production ready as Kafka Streams. 
+  
+---
+
+## 14. Splunk
 
 ### Duration: 1 Hour
 
@@ -220,28 +255,44 @@ If you feel that you don't understand it enough, you are more than welcome to re
 
 ---
 
-## 13. Data Warehouse \ Data Lake
+## 15. Data Warehouse \ Data Lake
 
 ### Duration: 2 Days
 
+### OLAP VS OLTP
 - [OLAP vs OLTP](https://youtu.be/iw-5kFzIdgY?si=do71e86y3TqNCbxQ)
 - [More on OLAP vs OLTP](https://www.geeksforgeeks.org/dbms/difference-between-olap-and-oltp-in-dbms/)
 - [Databases vs Datawarehouses vs Datalakes](https://youtu.be/-bSkREem8dM?si=CfTmfdbV9wja5BWS)
+- [More On Data Lake VS Warehouse](https://luminousmen.com/post/data-lake-vs-data-warehouse/#data-warehouse/)
+- [Data lakehouse](https://arxiv.org/abs/2310.08697v1) - optional
+
+### File Formats
+- [Big Data File Formats](https://www.upsolver.com/blog/the-file-format-fundamentals-of-big-data)
+- [Avro File Format](https://sqream.com/blog/a-detailed-introduction-to-the-avro-data-format/)
+- [ORC File Format](https://www.youtube.com/watch?v=IX5ElplseUY)
+- [Why Parquet](https://luminousmen.substack.com/p/why-parquet-is-the-go-to-format-for?utm_source=cross-post&publication_id=1936637&post_id=163835393&utm_campaign=1930705&isFreemail=true&r=57ujs9&triedRedirect=true)
+- [Parquet File](https://youtu.be/1j8SdS7s_NY?si=HOXHepdPRATRnjNm)
+- [Schema Evolution](https://www.linkedin.com/pulse/schema-evolution-avro-orc-parquet-detailed-approach-aniket-kulkarni-z7zpf/)
+
+### Open Table Formats
 - [Hive Introduction](https://youtu.be/cMziv1iYt28?si=chzEEPKILW-2Ovow)
 - [Iceberg Introduction](https://youtu.be/TsmhRZElPvM?si=V8tvEUZhRCEIlq8G)
-- [Why Iceberg](https://vutr.substack.com/p/why-do-we-need-open-table-formats?utm_source=post-email-title&publication_id=1930705&post_id=164015666&utm_campaign=email-post-title&isFreemail=true&r=57ujs9&triedRedirect=true)
 - [How Iceberg Stores Data](https://youtu.be/xfAYLAFCLvM?si=mgZocoUYGFJo9CKp)
 - [A bit more on iceberg benefits](https://iceberg.apache.org/)
 - [More on Iceberg Catalog Mechanics](https://youtu.be/4hcfveg1t70?si=0NhYDRmg6jyGqkQq)
-- [Big Data File Formats](https://www.upsolver.com/blog/the-file-format-fundamentals-of-big-data)
-- [Why Parquet](https://luminousmen.substack.com/p/why-parquet-is-the-go-to-format-for?utm_source=cross-post&publication_id=1936637&post_id=163835393&utm_campaign=1930705&isFreemail=true&r=57ujs9&triedRedirect=true)
-- [Parquet File](https://youtu.be/1j8SdS7s_NY?si=HOXHepdPRATRnjNm)
+- [Detailed talk on iceberg](https://www.youtube.com/watch?v=kJaD0WuQ1Bg) - optional
+
+### Data Partitioning
 - [More on Partitioning](https://vutr.substack.com/p/partitioning-and-clustering?utm_source=post-email-title&publication_id=1930705&post_id=166732941&utm_campaign=email-post-title&isFreemail=true&r=57ujs9&triedRedirect=true&utm_medium=email)
+- [How not to partition data](https://luminousmen.substack.com/p/how-not-to-partition-data-in-s3-and)
+
+
+### Other
 - [Apache Arrow](https://youtu.be/R4BIXbfKBtk?si=-HrXgui3LkQA61Om)
 
 ---
 
-## 14. Trino
+## 16. Trino
 
 ### Duration: 0.5 Hour
 
