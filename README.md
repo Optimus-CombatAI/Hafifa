@@ -43,27 +43,29 @@ Happy learning!🤍
       - [5.2. MongoDB](#52-mongodb)
       - [5.3. S3](#53-s3)
       - [5.4. Redis](#54-redis)
-  - [6. Building API](#6-building-api)
+  - [6. SQL](#6-sql)
+    - [Duration: 5 hours](#duration-5-hours)
+  - [7. Building API](#7-building-api)
     - [Duration: 0.5 Day](#duration-05-day)
-      - [6.1. FastAPI](#61-fastapi)
-      - [6.2. SQLAlchemy](#62-sqlalchemy)
-  - [7. Testing](#7-testing)
+      - [7.1. FastAPI](#71-fastapi)
+      - [7.2. SQLAlchemy](#72-sqlalchemy)
+  - [8. Testing](#8-testing)
     - [Duration: 0.5 Days](#duration-05-days)
-  - [8. Useful Python Libraries](#8-useful-python-libraries)
+  - [9. Useful Python Libraries](#9-useful-python-libraries)
     - [Duration: 1 Day](#duration-1-day-4)
-  - [9. Rolling Exercise](#9-rolling-exercise)
+  - [10. Rolling Exercise](#10-rolling-exercise)
     - [Duration: 5 Days](#duration-5-days)
-  - [10. Data Engineering](#10-data-engineering)
+  - [11. Data Engineering](#11-data-engineering)
     - [Duration: 1 Hour](#duration-1-hour)
-  - [11. Kafka🩷](#11-kafka)
+  - [12. Kafka🩷](#12-kafka)
     - [Duration: 4 Hour](#duration-4-hours)
-  - [12. Streaming](#12-streaming)
+  - [13. Streaming](#13-streaming)
      - [Duration: 3 hours](#duration-3-hours)
-  - [13. Splunk](#13-splunk)
+  - [14. Splunk](#14-splunk)
     - [Duration: 1 Hour](#duration-1-hour-2)
-  - [14. Data Warehouse \\ Data Lake](#14-data-warehouse--data-lake)
+  - [15. Data Warehouse \\ Data Lake](#15-data-warehouse--data-lake)
     - [Duration: 2 Days](#duration-2-days-1)
-  - [15. Trino](#15-trino)
+  - [16. Trino](#16-trino)
     - [Duration: 0.5 Hour](#duration-05-hour)
    
 ---
@@ -141,13 +143,21 @@ Inroduction to Redis and learning the syntax
 
 ---
 
-## 6. Building API
+## 6. SQL
+
+### Duration: 5 hours
+
+-[SQL Challange](https://mystery.knightlab.com/)
+
+---
+
+## 7. Building API
 
 ### Duration: 0.5 Day
 
 **Learning Material**:
 
-#### 6.1. FastAPI
+#### 7.1. FastAPI
 - [FastAPI Explanation](https://youtu.be/iWS9ogMPOI0?si=HPv_xetY7HGfOxPK)
 - [FastAPI Syntax Guide](https://fastapi.tiangolo.com/tutorial/first-steps/)
 
@@ -157,12 +167,12 @@ Inroduction to Redis and learning the syntax
   - "Handling Errors"
   - "Debugging"
 
-#### 6.2. SQLAlchemy
+#### 7.2. SQLAlchemy
 - [SQLAlchemy Documentation](https://www.tutorialspoint.com/sqlalchemy/sqlalchemy_introduction.htm)
 
 ---
 
-## 7. Testing
+## 8. Testing
 
 ### Duration: 0.5 Days
 
@@ -173,7 +183,7 @@ Inroduction to Redis and learning the syntax
 
 ---
 
-## 8. Useful Python Libraries
+## 9. Useful Python Libraries
 
 ### Duration: 1 Day
 
@@ -183,7 +193,7 @@ Inroduction to Redis and learning the syntax
 
 ---
 
-## 9. Rolling Exercise
+## 10. Rolling Exercise
 
 ### Duration: 5 Days
 
@@ -193,7 +203,7 @@ There is an exercise in the `rolling_exercise/` folder where you'll need to buil
 # Before the next section please do the Newbies training - DevOps section in the TS
 ---
 
-## 10. Data Engineering
+## 11. Data Engineering
 
 ### Duration: 1 Hour
 
@@ -205,7 +215,7 @@ If you feel that you don't understand it enough, you are more than welcome to re
 
 ---
 
-## 11. Kafka🩷
+## 12. Kafka🩷
 
 ### Duration: 4 hours
 
@@ -218,7 +228,7 @@ If you feel that you don't understand it enough, you are more than welcome to re
 
 ---
 
-## 12. Streaming
+## 13. Streaming
 
 ### Duration: 3 Hours
 
@@ -235,7 +245,7 @@ There is an implementation of Kafka Streams in python named Faust. And yet Faust
   
 ---
 
-## 13. Splunk
+## 14. Splunk
 
 ### Duration: 1 Hour
 
@@ -245,7 +255,7 @@ There is an implementation of Kafka Streams in python named Faust. And yet Faust
 
 ---
 
-## 14. Data Warehouse \ Data Lake
+## 15. Data Warehouse \ Data Lake
 
 ### Duration: 2 Days
 
@@ -282,7 +292,7 @@ There is an implementation of Kafka Streams in python named Faust. And yet Faust
 
 ---
 
-## 15. Trino
+## 16. Trino
 
 ### Duration: 0.5 Hour
 
