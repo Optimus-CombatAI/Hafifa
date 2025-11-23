@@ -1,138 +1,187 @@
-from mutagen.easyid3 import EasyID3
+# from mutagen.easyid3 import EasyID3
+
 import pygame
 from tkinter.filedialog import *
 from tkinter import *
+
+import random
+from dataclasses import dataclass
+from typing import Dict
+
 pygame.init()
-global list1
-global pausing
-global list_index
-global SONG_END
-global text1
-global label1
+
+BUTTON_BG = 'AntiqueWhite1'
+BUTTON_WIDTH = 40
+
+
+def get_random_artist() -> str:
+    artist = ["Eminem", "JayZ", "2Pac", "Bob Dylan", "Madonna", "Rihanna", "Cher"]
+    rand_artist = artist[random.randint(0, len(artist) - 1)]
+    return rand_artist
+
+
+def get_song_name(file_path) -> str:
+    len_file_type = len(".mp3")
+    return file_path.split("/")[-1][:-len_file_type]
+
+
+@dataclass
+class Song:
+    song_path: str
+    song_metadata: Dict[str, str]
+
+
 class FrameApp(Frame):
-    def __init__(self,master):
+    def __init__(self, master):
         super(FrameApp, self).__init__(master)
-        global text1, label1, list1, pausing, list_index, SONG_END
         self.grid()
-        b1 = Button(self, text="PLAY SONG",command=button2,bg='AntiqueWhite1',width=40)
-        b1.grid(row=2,column=0)
-        b2 = Button(self, text="PREVIOUS SONG",command=button4,bg='AntiqueWhite1',width=40)
-        b2.grid(row=4,column=0)
-        b3 = Button(self, text="PAUSE/UNPAUSE",command=button3,bg='AntiqueWhite1',width=40)
-        b3.grid(row=3,column=0)
-        b4 = Button(self, text="NEXT SONG",command=button5,bg='AntiqueWhite1',width=40)
-        b4.grid(row=5,column=0)
-        b5 = Button(self, text="ADD TO LIST",command=button1,bg='AntiqueWhite1',width=40)
-        b5.grid(row=1,column=0)
-        label1 = Label(self, fg='Black',font=('Helvetica 12 bold italic',10),bg='ivory2')
-        label1.grid(row=6,column=0)
-        text1 = Text(self,wrap=WORD,width=60)
-        text1.grid(row=8,column=0)
-        list1 = list()
-        pausing = False
-        list_index = 0
-        SONG_END = pygame.USEREVENT + 1
+        play_btn = Button(self, text="PLAY SONG", command=play_song, bg=BUTTON_BG, width=BUTTON_WIDTH)
+        play_btn.grid(row=2, column=0)
+        prev_btn = Button(self, text="PREVIOUS SONG", command=play_prev_song, bg=BUTTON_BG, width=BUTTON_WIDTH)
+        prev_btn.grid(row=4, column=0)
+        pause_btn = Button(self, text="PAUSE/UNPAUSE", command=pause_song, bg=BUTTON_BG, width=BUTTON_WIDTH)
+        pause_btn.grid(row=3, column=0)
+        next_btn = Button(self, text="NEXT SONG", command=play_next_song, bg=BUTTON_BG, width=BUTTON_WIDTH)
+        next_btn.grid(row=5, column=0)
+        add_btn = Button(self, text="ADD TO LIST", command=add_songs_to_list, bg=BUTTON_BG, width=BUTTON_WIDTH)
+        add_btn.grid(row=1, column=0)
+
+        self.message_label = Label(self, fg='Black', font=('Helvetica 12 bold italic', 10), bg='ivory2')
+        self.message_label.grid(row=6, column=0)
+        self.text_list = Text(self, wrap=WORD, width=60)
+        self.text_list.grid(row=8, column=0)
+        self.songs_list = list()
+        self.pausing = False
+        self.list_index = 0
+        self.SONG_END = pygame.USEREVENT + 1
+
+
 #################################################################################
-def button1():
-    global list_index, list1, SONG_END, pausing, label1, text1
+def add_songs_to_list():
     try:
+        app.text_list.delete(0.0, END)
         directory = askopenfilenames()
         for song_dir in directory:
             print(song_dir)
-            list1.append(song_dir)
-        text1.delete(0.0, END)
+            song_metadata = {'title': get_song_name(song_dir), 'artist': get_random_artist()}
+            app.songs_list.append(Song(song_dir, song_metadata))
 
-        for key, item in enumerate(list1):
-            song = EasyID3(item)
-            song_data = (str(key + 1) + ' : ' + song['title'][0] + ' - '
-                         + song['artist'][0])
-            text1.insert(END, song_data + '\n')
+        for key, item in enumerate(app.songs_list):
+            # song = EasyID3(item)
+            song = app.songs_list[key]
+            song_data = (str(key + 1) + ' : ' + song.song_metadata['title'] + ' - ' + song.song_metadata['artist'])
+            app.text_list.insert(END, song_data + '\n')
+
     except:
-        pass
+        print("an error occurred")
+
+
 #################################################################################
-def song_data():
-    global list_index, list1, SONG_END, pausing, label1, text1
+def get_song_data():
     try:
-        song = EasyID3(list1[list_index])
-        song_data = "Now playing: Nr:" + str(list_index + 1) + " " + \
-                    str(song['title']) + " - " + str(song['artist'])
+        song = app.songs_list[app.list_index]
+        song_data = f"Now playing: {song.song_metadata['title']} - {song.song_metadata['artist']} " \
+                    f"Nr:{str(app.list_index + 1)} "
         return song_data
+
     except:
-        pass
+        print("failed to get song data")
+
+
 #################################################################################
-def button2():
-    global list_index, list1, SONG_END, pausing, label1, text1
+def play_song():
     try:
-        directory = list1[list_index]
+        directory = app.songs_list[app.list_index].song_path
         pygame.mixer.music.load(directory)
         pygame.mixer.music.play(1, 0.0)
-        pygame.mixer.music.set_endevent(SONG_END)
-        pausing = False
-        label1['text'] = song_data()
+        pygame.mixer.music.set_endevent(app.SONG_END)
+        app.pausing = False
+        app.message_label['text'] = get_song_data()
+
     except:
-        pass
+        print("play song btn")
+
+
 #################################################################################
 def check_music():
-    global list_index, list1, SONG_END, pausing, label1, text1
     try:
         for event in pygame.event.get():
-            if event.type == SONG_END:
-                button5()
+            if event.type == app.SONG_END:
+                play_next_song()
+
     except:
-        pass
+        print("failed to check song")
+
+
 #################################################################################
-def button3():
-    global list_index, list1, SONG_END, pausing, label1, text1
+def pause_song():
     try:
-        if pausing:
+        if app.pausing:
             pygame.mixer.music.unpause()
-            pausing = False
-        elif not pausing:
+            app.pausing = False
+        else:
             pygame.mixer.music.pause()
-            pausing = True
+            app.pausing = True
+
     except:
-        pass
+        print("pause/unpause btn")
+
+
 #################################################################################
 def get_next_song():
-    global list_index, list1, SONG_END, pausing, label1, text1
     try:
-        if list_index + 2 <= len(list1):
-            return list_index + 1
+        return (app.list_index + 1) % len(app.songs_list)
+        """if app.list_index + 1 < len(app.songs_list):
+            return app.list_index + 1
         else:
-            return 0
+            return 0"""
     except:
-        pass
+        print("failed next song")
+
+
 #################################################################################
-def button5():
-    global list_index, list1, SONG_END, pausing, label1, text1
+def play_next_song():
     try:
-        list_index = get_next_song()
-        button2()
+        app.list_index = get_next_song()
+        play_song()
+
     except:
-        pass
+        print("failed next song")
+
+
 #################################################################################
 def get_previous_song():
-    global list_index, list1, SONG_END, pausing, label1, text1
     try:
-        if list_index - 1 >= 0:
-            return list_index - 1
+        return (app.list_index - 1) % len(app.songs_list)
+
+        """if app.list_index - 1 >= 0:
+            return app.list_index - 1
         else:
-            return len(list1) - 1
+            return len(app.songs_list) - 1"""
     except:
-        pass
+        print("failed to previous song")
+
+
 #################################################################################
-def button4():
-    global list_index, list1, SONG_END, pausing, label1, text1
+def play_prev_song():
     try:
-        list_index = get_previous_song()
-        button2()
+        app.list_index = get_previous_song()
+        play_song()
+
     except:
-        pass
+        print("prev song btn")
+
+
 #################################################################################
 #################################################################################
+
+SCREEN_DIMENSION = "500x500"
+APP_TITLE = "MP3 Music Player"
+
 window = Tk()
-window.geometry("500x500")
-window.title("MP3 Music Player")
+window.geometry(SCREEN_DIMENSION)
+window.title(APP_TITLE)
+
 #################################################################################
 app = FrameApp(window)
 #################################################################################
