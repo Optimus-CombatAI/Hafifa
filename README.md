@@ -298,4 +298,12 @@ There is an implementation of Kafka Streams in python named Faust. And yet Faust
 
 - [Trino Introduction](https://www.youtube.com/watch?v=SKNJObdGCsY)
 - [Trino Concepts](https://trino.io/docs/current/overview/concepts.html)
+
+---
+
+## 17. Airflow
+
+### Duration: 2 hours
+
+- [Practical Overview Of Airflow UI](https://youtube.com/playlist?list=PLcoE64orFoVsyzbvfgiY5iNKo30fJ4IWm&si=ZiouDEBaXTZCMRNA)
   
