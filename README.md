@@ -303,7 +303,8 @@ There is an implementation of Kafka Streams in python named Faust. And yet Faust
 
 ## 17. Airflow
 
-### Duration: 2 hours
+### Duration: 4 hours
 
+- [All About Airflow](https://medium.com/@sumitmudliar/beginners-guide-to-apache-airflow-4827c3f4bfe4)
 - [Practical Overview Of Airflow UI](https://youtube.com/playlist?list=PLcoE64orFoVsyzbvfgiY5iNKo30fJ4IWm&si=ZiouDEBaXTZCMRNA)
   
