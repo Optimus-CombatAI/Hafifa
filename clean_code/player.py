@@ -7,10 +7,12 @@ from tkinter import *
 import random
 from dataclasses import dataclass
 from pathlib import Path
-
+from functools import wraps
 import logging
+import os
+from dotenv import load_dotenv
 
-
+load_dotenv("venv/.env")
 pygame.init()
 
 logging.basicConfig(
@@ -21,6 +23,17 @@ logging.basicConfig(
 
 BUTTON_BG = 'AntiqueWhite1'
 BUTTON_WIDTH = 40
+SONG_END = pygame.USEREVENT + 1
+
+
+def log_exceptions(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logging.info(f"An error occurred in {func.__name__}: {e}")
+    return wrapper
 
 
 def get_random_artist() -> str:
@@ -30,15 +43,14 @@ def get_random_artist() -> str:
     return rand_artist
 
 
-def get_song_name(song_file_path) -> str:
-
+def get_song_name(song_file_path: str) -> str:
     return Path(song_file_path).stem
 
 
-def play_music(directory, song_end):
+def play_music(directory: str) -> None:
     pygame.mixer.music.load(directory)
     pygame.mixer.music.play(1, 0.0)
-    pygame.mixer.music.set_endevent(song_end)
+    pygame.mixer.music.set_endevent(SONG_END)
 
 
 @dataclass
@@ -75,117 +87,88 @@ class FrameApp(Frame):
         self.songs_list = list()
         self.pausing = False
         self.list_index = 0
-        self.song_end = pygame.USEREVENT + 1  # TODO: should be lower case? Doesn't change through the runtime
 
     #################################################################################
-    def add_songs_to_list(self):
-        try:
-            directory = askopenfilenames()
+    def append_songs(self, directory: tuple[str, ...]) -> None:
+        for song_dir in directory:
+            logging.info(song_dir)
+            self.songs_list.append(Song(song_dir, get_song_name(song_dir), get_random_artist()))
 
-            for song_dir in directory:
-                logging.info(song_dir)
-                self.songs_list.append(Song(song_dir, get_song_name(song_dir), get_random_artist()))
+    def add_to_text_list(self) -> None:
+        for index, song in enumerate(self.songs_list):
+            # song = EasyID3(item)
+            song_data = f"{index + 1}: {song.title} - {song.artist}"
+            self.text_list.insert(END, song_data + '\n')
 
-            self.text_list.delete(0.0, END)
+    @log_exceptions
+    def add_songs_to_list(self) -> None:
+        directory = askopenfilenames()
+        self.append_songs(directory)
 
-            for index, song in enumerate(self.songs_list):
-                # song = EasyID3(item)
-                song_data = f"{index + 1}: {song.title} - {song.artist}"
-                self.text_list.insert(END, song_data + '\n')
-
-        except Exception as e:
-            logging.info(f"an error occurred:{e}")
-
-    #################################################################################
-    def get_song_data(self):
-        try:
-            song = self.songs_list[self.list_index]
-            song_data = f"Now playing: Nr:{self.list_index + 1} {song.title} - {song.artist} "
-
-            return song_data
-
-        except Exception as e:
-            logging.info(f"an error occurred:{e}")
+        self.text_list.delete(0.0, END)
+        self.add_to_text_list()
 
     #################################################################################
-    def play_song(self):
-        try:
-            directory = self.songs_list[app.list_index].path
-            play_music(directory, self.song_end)
+    @log_exceptions
+    def get_song_data(self) -> str:
+        song = self.songs_list[self.list_index]
+        song_data = f"Now playing: Nr:{self.list_index + 1} {song.title} - {song.artist} "
+
+        return song_data
+
+    #################################################################################
+    @log_exceptions
+    def play_song(self) -> None:
+        directory = self.songs_list[self.list_index].path
+        play_music(directory)
+        self.pausing = False
+        self.message_label['text'] = self.get_song_data()
+
+#################################################################################
+    @log_exceptions
+    def check_music(self) -> None:
+        for event in pygame.event.get():
+            if event.type == SONG_END:
+                self.play_next_song()
+
+#################################################################################
+    @log_exceptions
+    def pause_song(self) -> None:
+        if self.pausing:
+            pygame.mixer.music.unpause()
             self.pausing = False
-            self.message_label['text'] = self.get_song_data()
-
-        except Exception as e:
-            logging.info(f"an error occurred:{e}")
-
-#################################################################################
-    def check_music(self):
-        try:
-
-            for event in pygame.event.get():
-                if event.type == self.song_end:
-                    self.play_next_song()
-
-        except Exception as e:
-            logging.info(f"an error occurred:{e}")
+        else:
+            pygame.mixer.music.pause()
+            self.pausing = True
 
 #################################################################################
-    def pause_song(self):
-        try:
-            if self.pausing:
-                pygame.mixer.music.unpause()
-                self.pausing = False
-            else:
-                pygame.mixer.music.pause()
-                self.pausing = True
-
-        except Exception as e:
-            logging.info(f"an error occurred:{e}")
-
-#################################################################################
-    def get_next_song(self):
-        try:
-
-            return (self.list_index + 1) % len(self.songs_list)
-
-        except Exception as e:
-            logging.info(f"an error occurred:{e}")
+    @log_exceptions
+    def get_next_song(self) -> int:
+        return (self.list_index + 1) % len(self.songs_list)
 
     #################################################################################
-    def play_next_song(self):
-        try:
-            self.list_index = self.get_next_song()
-            self.play_song()
-
-        except Exception as e:
-            logging.info(f"an error occurred:{e}")
+    @log_exceptions
+    def play_next_song(self) -> None:
+        self.list_index = self.get_next_song()
+        self.play_song()
 
     #################################################################################
-    def get_previous_song(self):
-        try:
-
-            return (self.list_index - 1) % len(self.songs_list)
-
-        except Exception as e:
-            logging.info(f"an error occurred:{e}")
+    @log_exceptions
+    def get_previous_song(self) -> int:
+        return (self.list_index - 1) % len(self.songs_list)
 
     #################################################################################
-    def play_prev_song(self):
-        try:
-            self.list_index = self.get_previous_song()
-            self.play_song()
-
-        except Exception as e:
-            logging.info(f"an error occurred:{e}")
-
-# TODO: seems redundant all the exceptions. Is there more efficient way to write handle exceptions?
+    @log_exceptions
+    def play_prev_song(self) -> None:
+        self.list_index = self.get_previous_song()
+        self.play_song()
 
 
 #################################################################################
 #################################################################################
 
-SCREEN_DIMENSION = "500x500"
-APP_TITLE = "MP3 Music Player"
+SCREEN_DIMENSION = os.getenv("SCREEN_DIMENSION", "600x600")
+APP_TITLE = os.getenv("APP_TITLE", "default app title")
 
 window = Tk()
 window.geometry(SCREEN_DIMENSION)
