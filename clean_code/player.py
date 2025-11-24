@@ -9,10 +9,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from functools import wraps
 import logging
-import os
 from dotenv import load_dotenv
 
-load_dotenv("venv/.env")
+from const import BUTTON_BG, BUTTON_WIDTH, SONG_END, SCREEN_DIMENSION, APP_TITLE
+
+load_dotenv()
 pygame.init()
 
 logging.basicConfig(
@@ -20,10 +21,6 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
-
-BUTTON_BG = 'AntiqueWhite1'
-BUTTON_WIDTH = 40
-SONG_END = pygame.USEREVENT + 1
 
 
 def log_exceptions(func):
@@ -89,12 +86,12 @@ class FrameApp(Frame):
         self.list_index = 0
 
     #################################################################################
-    def append_songs(self, directory: tuple[str, ...]) -> None:
+    def _append_songs(self, directory: tuple[str, ...]) -> None:
         for song_dir in directory:
             logging.info(song_dir)
             self.songs_list.append(Song(song_dir, get_song_name(song_dir), get_random_artist()))
 
-    def add_to_text_list(self) -> None:
+    def _add_to_text_list(self) -> None:
         for index, song in enumerate(self.songs_list):
             # song = EasyID3(item)
             song_data = f"{index + 1}: {song.title} - {song.artist}"
@@ -103,10 +100,10 @@ class FrameApp(Frame):
     @log_exceptions
     def add_songs_to_list(self) -> None:
         directory = askopenfilenames()
-        self.append_songs(directory)
+        self._append_songs(directory)
 
         self.text_list.delete(0.0, END)
-        self.add_to_text_list()
+        self._add_to_text_list()
 
     #################################################################################
     @log_exceptions
@@ -166,9 +163,6 @@ class FrameApp(Frame):
 
 #################################################################################
 #################################################################################
-
-SCREEN_DIMENSION = os.getenv("SCREEN_DIMENSION", "600x600")
-APP_TITLE = os.getenv("APP_TITLE", "default app title")
 
 window = Tk()
 window.geometry(SCREEN_DIMENSION)
