@@ -9,11 +9,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from functools import wraps
 import logging
-from dotenv import load_dotenv
 
 from const import BUTTON_BG, BUTTON_WIDTH, SONG_END, SCREEN_DIMENSION, APP_TITLE
 
-load_dotenv()
 pygame.init()
 
 logging.basicConfig(
