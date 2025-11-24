@@ -67,6 +67,8 @@ Happy learning!🤍
     - [Duration: 2 Days](#duration-2-days-1)
   - [16. Trino](#16-trino)
     - [Duration: 0.5 Hour](#duration-05-hour)
+  - [17. Airflow](#17-airflow)
+    - [Duration: 4 Hours](#duration-4-hours-1)
    
 ---
 
