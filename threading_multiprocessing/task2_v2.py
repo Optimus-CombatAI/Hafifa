@@ -2,18 +2,16 @@ import pandas as pd
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, Future
 import yfinance as yf
-from dotenv import load_dotenv
-import os
+
 from pathlib import Path
+from constants import SOURCE_FILES, DESTINATION_FILES, STOCK_TICKERS
 
 
 def prepare_stock_data_df(futures: list[Future]) -> pd.DataFrame:
-    stock_results = [future.result() for future in futures]
-    stock_results = [stock_result for stock_result in stock_results if not stock_result.empty]
+    stock_results = [future.result() for future in futures if not future.result().empty]
+    combined_stock_df = pd.concat(stock_results)
 
-    combined = pd.concat(stock_results)
-
-    return combined.reset_index()
+    return combined_stock_df.reset_index()
 
 
 def clean_up_dates(dates_df: pd.DataFrame) -> pd.DataFrame:
@@ -24,7 +22,9 @@ def clean_up_dates(dates_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_stock_type_from_destination_file(file_path: str) -> str:
+    """used for getting the stock name for file documentation"""
     no_suffix = Path(file_path).stem
+
     return no_suffix.replace("_data", "")
 
 
@@ -51,16 +51,6 @@ def add_percentage(dates_df: pd.DataFrame) -> None:
     dates_df["percent_change"] = dates_df["percent_change"].fillna(0)
 
 
-def get_env_variables() -> tuple[list[str], list[str], list[yf.Ticker]]:
-    load_dotenv()
-
-    source_files = [value for key, value in os.environ.items() if key.endswith("_SOURCE_FILE")]
-    destination_files = [value for key, value in os.environ.items() if key.endswith("_DESTINATION_FILE")]
-    tickers = [yf.Ticker(value) for key, value in os.environ.items() if key.endswith("_STOCK")]
-
-    return source_files, destination_files, tickers
-
-
 def write_to_csv(stock_data: pd.DataFrame, destination_file: str) -> None:
     add_percentage(stock_data)
 
@@ -68,13 +58,9 @@ def write_to_csv(stock_data: pd.DataFrame, destination_file: str) -> None:
     stock_data[["Date", "stock_type", "percent_change"]].to_csv(destination_file)
 
 
-SOURCE_FILES, DESTINATION_FILES, STOCK_TICKERS = get_env_variables()
-
-
 def main() -> None:
 
     stocks_dates = get_dates(SOURCE_FILES)
-    print(stocks_dates)
 
     stocks_futures = []
 
