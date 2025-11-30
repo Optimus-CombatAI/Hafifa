@@ -29,7 +29,7 @@ def get_next_date(date: datetime) -> datetime:
     return date + timedelta(days=1)
 
 
-def fetch_data(date: datetime) -> None:
+def fetch_data(date: datetime) -> pd.DataFrame:
     return BTC_TICKER.history(start=date, end=get_next_date(date))
 
 
