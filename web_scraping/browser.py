@@ -1,15 +1,19 @@
+import asyncio
+import base64
+import json
+from pathlib import Path
+from typing import Tuple
 
 from bs4 import BeautifulSoup
-import base64
 import tldextract
-import json
-from constants import URLS, DRIVER
-from pathlib import Path
-import asyncio
 from playwright.async_api import async_playwright
 
+from constants import DRIVER, URLS
+from models.DataSaveFormat import DataSaveFormat
+from models.HtmlData import HtmlData
 
-async def get_page_data(url: str) -> tuple[str, bytes]:
+
+async def get_page_data(url: str) -> Tuple[str, bytes]:
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
         page = await browser.new_page()
@@ -22,7 +26,7 @@ async def get_page_data(url: str) -> tuple[str, bytes]:
         return html_content, screenshot_bytes
 
 
-def store_url_data(folder_path: Path, data: dict) -> None:
+def store_url_data(folder_path: Path, data: DataSaveFormat) -> None:
     with open(f"{folder_path}/browse.json", "w") as file:
         json.dump(data, file, indent=4)
 
@@ -34,22 +38,23 @@ def get_folder_path(url: str) -> Path:
     return folder_path
 
 
-def get_resources(html_content: str) -> dict:
+def get_resources(html_content: str) -> HtmlData:
     html_soup = BeautifulSoup(html_content, "html.parser")
 
     imgs = [img.get("src") for img in html_soup.find_all("img") if img.get("src")]
     scripts = [script.get("src") for script in html_soup.find_all("script") if script.get("src")]
     links = [link.get("href") for link in html_soup.find_all("link") if link.get("href")]
-    anchors = [a.get("href") for a in html_soup.find_all("a") if a.get("href")]
+    anchors = [href.get("href") for href in html_soup.find_all("a") if href.get("href")]
 
-    return {"images": imgs, "scripts": scripts, "links": links, "anchors": anchors}
+    return HtmlData(images=imgs, scripts=scripts, links=links, anchors=anchors)
 
 
-async def handle_url(url: str) -> None:
+async def get_info_from_url(url: str) -> None:
     html_content, screenshot_bytes = await get_page_data(url)
     resources = get_resources(html_content)
 
     folder_path = get_folder_path(url)
+
     if not folder_path.exists():
         folder_path.mkdir(parents=True, exist_ok=True)
 
@@ -57,18 +62,18 @@ async def handle_url(url: str) -> None:
 
     with open(img_path, "wb") as f:
         f.write(screenshot_bytes)
-    
-    data_to_save = {
-        "html": BeautifulSoup(html_content, "html.parser").prettify(),
-        "resources": resources,
-        "screenshot": base64.b64encode(screenshot_bytes).decode('utf-8')
-    }
+
+    data_to_save = DataSaveFormat(
+        html=BeautifulSoup(html_content, "html.parser").prettify(),
+        resources=resources,
+        screenshot=base64.b64encode(screenshot_bytes).decode('utf-8')
+    )
 
     store_url_data(folder_path, data_to_save)
 
 
 async def main() -> None:
-    await asyncio.gather(*(handle_url(url) for url in URLS))
+    await asyncio.gather(*(get_info_from_url(url) for url in URLS))
 
 
 if __name__ == '__main__':
