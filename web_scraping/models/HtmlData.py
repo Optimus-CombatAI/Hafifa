@@ -1,7 +1,8 @@
-from typing import List, TypedDict
+from typing import List
+from pydantic import BaseModel
 
 
-class HtmlData(TypedDict):
+class HtmlData(BaseModel):
     images: List[str]
     scripts: List[str]
     links: List[str]
