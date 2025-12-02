@@ -1,16 +1,16 @@
-
 import asyncio
 import base64
-from dataclasses import asdict
 import json
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Tuple
 
 from bs4 import BeautifulSoup
 import tldextract
 from playwright.async_api import async_playwright
 
-from constants import DRIVER, HtmlData, URLS
+from constants import DRIVER, URLS
+from models.DataSaveFormat import DataSaveFormat
+from models.HtmlData import HtmlData
 
 
 async def get_page_data(url: str) -> Tuple[str, bytes]:
@@ -26,7 +26,7 @@ async def get_page_data(url: str) -> Tuple[str, bytes]:
         return html_content, screenshot_bytes
 
 
-def store_url_data(folder_path: Path, data: Dict) -> None:
+def store_url_data(folder_path: Path, data: DataSaveFormat) -> None:
     with open(f"{folder_path}/browse.json", "w") as file:
         json.dump(data, file, indent=4)
 
@@ -46,10 +46,10 @@ def get_resources(html_content: str) -> HtmlData:
     links = [link.get("href") for link in html_soup.find_all("link") if link.get("href")]
     anchors = [href.get("href") for href in html_soup.find_all("a") if href.get("href")]
 
-    return HtmlData(imgs, scripts, links, anchors)
+    return HtmlData(images=imgs, scripts=scripts, links=links, anchors=anchors)
 
 
-async def get__infor_from_url(url: str) -> None:
+async def get_info_from_url(url: str) -> None:
     html_content, screenshot_bytes = await get_page_data(url)
     resources = get_resources(html_content)
 
@@ -62,18 +62,18 @@ async def get__infor_from_url(url: str) -> None:
 
     with open(img_path, "wb") as f:
         f.write(screenshot_bytes)
-    
-    data_to_save = {
-        "html": BeautifulSoup(html_content, "html.parser").prettify(),
-        "resources": asdict(resources),
-        "screenshot": base64.b64encode(screenshot_bytes).decode('utf-8')
-    }
+
+    data_to_save = DataSaveFormat(
+        html=BeautifulSoup(html_content, "html.parser").prettify(),
+        resources=resources,
+        screenshot=base64.b64encode(screenshot_bytes).decode('utf-8')
+    )
 
     store_url_data(folder_path, data_to_save)
 
 
 async def main() -> None:
-    await asyncio.gather(*(get__infor_from_url(url) for url in URLS))
+    await asyncio.gather(*(get_info_from_url(url) for url in URLS))
 
 
 if __name__ == '__main__':
