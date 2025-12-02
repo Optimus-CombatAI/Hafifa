@@ -26,9 +26,9 @@ async def get_page_data(url: str) -> Tuple[str, bytes]:
         return html_content, screenshot_bytes
 
 
-def store_url_data(folder_path: Path, data: DataSaveFormat) -> None:
+def store_url_data_in_file(folder_path: Path, data: DataSaveFormat) -> None:
     with open(f"{folder_path}/browse.json", "w") as file:
-        json.dump(data, file, indent=4)
+        json.dump(data.model_dump(), file, indent=4)
 
 
 def get_folder_path(url: str) -> Path:
@@ -38,7 +38,7 @@ def get_folder_path(url: str) -> Path:
     return folder_path
 
 
-def get_resources(html_content: str) -> HtmlData:
+def get_html_resources(html_content: str) -> HtmlData:
     html_soup = BeautifulSoup(html_content, "html.parser")
 
     imgs = [img.get("src") for img in html_soup.find_all("img") if img.get("src")]
@@ -51,7 +51,7 @@ def get_resources(html_content: str) -> HtmlData:
 
 async def get_info_from_url(url: str) -> None:
     html_content, screenshot_bytes = await get_page_data(url)
-    resources = get_resources(html_content)
+    resources = get_html_resources(html_content)
 
     folder_path = get_folder_path(url)
 
@@ -65,11 +65,11 @@ async def get_info_from_url(url: str) -> None:
 
     data_to_save = DataSaveFormat(
         html=BeautifulSoup(html_content, "html.parser").prettify(),
-        resources=resources,
+        resources=resources.model_dump(),
         screenshot=base64.b64encode(screenshot_bytes).decode('utf-8')
     )
 
-    store_url_data(folder_path, data_to_save)
+    store_url_data_in_file(folder_path, data_to_save)
 
 
 async def main() -> None:
