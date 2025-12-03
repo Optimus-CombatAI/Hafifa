@@ -236,6 +236,7 @@ If you feel that you don't understand it enough, you are more than welcome to re
 
 - [What is streaming](https://www.oreilly.com/radar/the-world-beyond-batch-streaming-101/)
 - [RocksDB](https://getstream.io/blog/rocksdb-fundamentals/)
+- [CDC](https://luminousmen.com/post/change-data-capture)
 - [Kafka Streams option 1](https://www.instaclustr.com/blog/kafka-streams-guide/) - optional
 - [Kafka Streams option 2](https://www.baeldung.com/java-kafka-streams) - optional
 - [Kafka Streams official tutorial](https://kafka.apache.org/documentation/streams/) - optional
