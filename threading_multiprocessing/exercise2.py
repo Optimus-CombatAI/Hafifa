@@ -1,61 +1,54 @@
-from typing import Dict, Any, Optional, List, Tuple
 import os
-import pandas as pd
-import yfinance as yf
-import logging
 from datetime import datetime, timedelta
+from typing import Dict, Any, Optional, List
 from concurrent.futures import ThreadPoolExecutor, Future
 
+import pandas as pd
+import yfinance as yf
+from config import STOCKS, logger
 
-STOCKS: Dict[str, Dict[str, str]] = {
-    "Bitcoin": {
-        "env_var": "BITCOIN_DATES",
-        "ticker": "BTC-USD"
-    },
-    "Google": {
-        "env_var": "GOOGLE_DATES",
-        "ticker": "GOOG"
-    },
-    "Amazon": {
-        "env_var": "AMAZON_DATES",
-        "ticker": "AMZN"
-    }
-}
-
-
-logging.basicConfig(level=logging.INFO,format="%(asctime)s - %(levelname)s - %(message)s")
-logger: logging.Logger = logging.getLogger(__name__)
-
-
-def load_dates_from_env(env_var: str) -> pd.DataFrame:
-    path: str = os.environ[env_var]
+# -------------------------
+# Load dates from env file
+# -------------------------
+def load_dates_from_env(dates_env_var: str) -> pd.DataFrame:
+    """
+    Load timestamps from a file specified in an environment variable.
+    """
+    path: str = os.environ[dates_env_var]
     df: pd.DataFrame = pd.read_csv(path, header=None, names=["hour"])
-    df = df.dropna()
     df["hour"] = df["hour"].astype(str)
-
     return df
 
 
+# -------------------------
+# Fetch price for one timestamp
+# -------------------------
 def get_price_for_date(ticker: str, date_string: str) -> Optional[float]:
-    # Try full timestamp with microseconds
+    """
+    Fetch the closing price for a given ticker and timestamp.
+    Handles timestamps with or without microseconds.
+    """
     try:
         dt_start: datetime = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S.%f")
     except ValueError:
-        # Fallback: timestamp without microseconds
         dt_start = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
 
     dt_end: datetime = dt_start + timedelta(minutes=1)
-    ans = yf.Ticker(ticker)
-    data = ans.history(start=dt_start, end=dt_end)
 
+    data = yf.Ticker(ticker).history(start=dt_start, end=dt_end)
     if data.empty:
         return None
 
-    price: float = float(data["Close"].iloc[0])
-    return price
+    return float(data["Close"].iloc[0])
 
 
-def worker(ticker: str, dates_df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
+# -------------------------
+# Fetch all prices for one ticker
+# -------------------------
+def fetch_prices_for_ticker(ticker: str, dates_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Fetch prices for a specific ticker for all given timestamps.
+    """
     rows: List[Dict[str, Any]] = []
 
     for date in dates_df["hour"]:
@@ -64,33 +57,71 @@ def worker(ticker: str, dates_df: pd.DataFrame, logger: logging.Logger) -> pd.Da
         if price is None:
             logger.warning(f"{ticker} : no price for {date}")
         else:
-            rows.append({
-                "ticker": ticker,
-                "hour": date,
-                "price": price
-            })
+            rows.append({"ticker": ticker, "hour": date, "price": price})
 
     return pd.DataFrame(rows)
 
 
+# -------------------------
+# Submit tasks to threads
+# -------------------------
+def submit_tasks(executor: ThreadPoolExecutor) -> Dict[str, Future]:
+    """
+    Submit one task per ticker to the executor and return a dict of futures.
+    """
+    futures: Dict[str, Future] = {}
+
+    for stock_name, info in STOCKS.items():
+        dates_df = load_dates_from_env(info["dates_env_var"])
+        future = executor.submit(fetch_prices_for_ticker, info["ticker"], dates_df)
+        futures[stock_name] = future
+
+    return futures
+
+
+# -------------------------
+# Collect results from futures
+# -------------------------
+def collect_results(futures: Dict[str, Future]) -> Dict[str, pd.DataFrame]:
+    """
+    Wait for all futures and collect the DataFrames.
+    """
+    results: Dict[str, pd.DataFrame] = {}
+
+    for stock_name, future in futures.items():
+        results[stock_name] = future.result()
+
+    return results
+
+
+# -------------------------
+# Build final DataFrame (merge + pct change)
+# -------------------------
+def build_final_dataframe(results: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """
+    Merge all DataFrames and compute percentage change per ticker.
+    """
+    final_df: pd.DataFrame = pd.concat(results.values(), ignore_index=True)
+
+    # Sort before calculating percentage change
+    final_df.sort_values(by=["ticker", "hour"], inplace=True)
+
+    # Add percentage change column
+    final_df["pct_change"] = final_df.groupby("ticker")["price"].pct_change()
+
+    return final_df
+
+
+# -------------------------
+# Main
+# -------------------------
 def main() -> pd.DataFrame:
-    all_results: Dict[str, pd.DataFrame] = {}
-
     with ThreadPoolExecutor(max_workers=3) as executor:
-        futures: List[Tuple[str, Future]] = []
+        futures = submit_tasks(executor)
+        results = collect_results(futures)
 
-        for stock_name, info in STOCKS.items():
-            env_var_name: str = info["env_var"]
-            dates: pd.DataFrame = load_dates_from_env(env_var_name)
+    final_df = build_final_dataframe(results)
 
-            future: Future = executor.submit(worker, info["ticker"], dates, logger)
-            futures.append((stock_name, future))
-
-        for stock_name, future in futures:
-            result: pd.DataFrame = future.result()
-            all_results[stock_name] = result
-
-    final_df: pd.DataFrame = pd.concat(all_results.values(), ignore_index=True)
     logger.info("All results successfully combined.")
     final_df.to_csv("results.csv", index=False)
 
