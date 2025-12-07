@@ -12,3 +12,4 @@ web_scraping/constants.py
 web_scraping/output/
 DB/
 FAST_API/
+Other/
