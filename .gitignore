@@ -10,6 +10,6 @@ threading_multiprocessing/constants.py
 threading_multiprocessing/task2.py
 web_scraping/constants.py
 web_scraping/output/
-DB/
+/DB
 FAST_API/
 Other/

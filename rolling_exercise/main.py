@@ -1,8 +1,13 @@
 from fastapi import FastAPI
-from consts import LOGGER
+
+from db.db_functions import set_up_db, fill_dummy_data
 from routers.air_quality_router import router as air_quality_router
 from routers.aqi_router import router as aqi_router
 from routers.alerts_router import router as alerts_router
+
+
+set_up_db()
+fill_dummy_data()
 
 app = FastAPI()
 
