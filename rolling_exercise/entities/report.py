@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, Date, ForeignKey
 from sqlalchemy.orm import relationship
 
 from consts import BASE
@@ -8,7 +8,7 @@ class Report(BASE):
     __tablename__ = 'reports'
 
     id = Column(Integer, primary_key=True)
-    date = Column(String)
+    date = Column(Date)
     city_id = Column(Integer, ForeignKey('cities.id', ondelete='CASCADE'))
     pm2_5 = Column(Integer)
     no2 = Column(Integer)
