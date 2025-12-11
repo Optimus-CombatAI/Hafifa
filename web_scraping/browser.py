@@ -11,10 +11,7 @@ from logger_config import logger
 
 
 def read_non_empty_lines(file_path: str) -> List[str]:
-    """
-    Read all non-empty stripped lines from a text file.
-    This function is generic and does not assume the content type.
-    """
+    
     logger.info(f"Reading text file: {file_path}")
 
     with open(file_path, "r", encoding="utf-8") as file:
@@ -26,10 +23,7 @@ def read_non_empty_lines(file_path: str) -> List[str]:
 
 
 async def navigate_page(page: Page, url: str) -> None:
-    """
-    Navigate to a URL with consistent loading behavior.
-    Separated for clarity and to avoid repeating logic.
-    """
+    
     logger.debug(f"Navigating to: {url}")
     await page.goto(url, wait_until="domcontentloaded", timeout=PAGE_TIMEOUT_MS)
 
@@ -161,23 +155,26 @@ async def process_url(browser: Browser, url: str, output_folder: str) -> None:
 
 
 
-async def run() -> None:
+async def run() -> None:   
     urls = read_non_empty_lines(INPUT_FILE)
     create_output_folders(urls)
 
     async with async_playwright() as playwright:
-        browser = await playwright.chromium.launch(headless=True)
+        async with await playwright.chromium.launch(headless=True) as browser:
 
-        tasks = [
-            process_url(browser,url,os.path.join(OUTPUT_DIR, f"url_{index}") )
+            tasks = [
+                process_url(
+                    browser,
+                    url,
+                    os.path.join(OUTPUT_DIR, f"url_{index}")
+                )
+                for index, url in enumerate(urls, start=1)
+            ]
 
-            for index, url in enumerate(urls, start=1)
-        ]
-
-        await asyncio.gather(*tasks)
-        await browser.close()
+            await asyncio.gather(*tasks)
 
     logger.info("All URLs processed successfully.")
+
 
 
 
