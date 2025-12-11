@@ -1,32 +1,24 @@
 from datetime import datetime, timedelta
 import random
+from typing import Dict
 
-from sqlalchemy import Table, Column, Integer, String, Date, ForeignKey, text, insert, select
+import numpy as np
+import pandas as pd
+from sqlalchemy import text, select
+from sqlalchemy.dialects.postgresql import insert
 
 from consts import ENGINE, LOGGER, META_DATA, SESSION
+from db.cities_table import cities
+from db.reports_table import reports
+from db.alerts_table import alerts
 from entities.city import City
 from entities.report import Report
+from entities.alert import Alert
+from entities.airQualityDataRow import AirQualityDataRow
+from utils.calculate_aqi import calculate_aqi
 
 
-cities = Table(
-    'cities', META_DATA,
-    Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('name', String),
-)
-
-reports = Table(
-    'reports', META_DATA,
-    Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('date', Date),
-    Column('city_id', Integer, ForeignKey('cities.id', ondelete='CASCADE')),
-    Column('pm2_5', Integer),
-    Column('no2', Integer),
-    Column('co2', Integer),
-    Column('aqi', Integer),
-)
-
-
-async def set_up_db():
+async def set_up_db() -> None:
     with ENGINE.connect() as conn:
         for table in reversed(META_DATA.sorted_tables):
             conn.execute(text(f"DROP TABLE IF EXISTS {table.name} CASCADE;"))
@@ -42,8 +34,9 @@ def _get_random_date(start: datetime = datetime(2025, 11, 10), end: datetime = d
     return (start + timedelta(days=random_days)).date()
 
 
-async def fill_dummy_data():
+async def fill_dummy_data() -> None:
     random_cities = ['Be\'er Sheva', 'Holon', 'Haifa', 'Tel Aviv', 'Netanya']
+    levels = ["Good", "Moderate", "Unhealthy for Sensitive Groups", "Unhealthy", "Very Unhealthy", "Hazardous"]
     city_stmt = [insert(cities).values(name=city_name) for city_name in random_cities]
 
     report_stmt = []
@@ -51,7 +44,14 @@ async def fill_dummy_data():
         report_stmt.append(
             insert(reports).values(date=_get_random_date(), city_id=random.randint(1, len(random_cities)),
                                    pm2_5=random.randint(1, 10), no2=random.randint(1, 10), co2=random.randint(1, 10),
-                                   aqi=random.randint(1, 10))
+                                   overall_aqi=random.randint(1, 10), aqi_level=random.choice(levels))
+        )
+
+    alert_stmt = []
+    for i in range(2):
+        alert_stmt.append(
+            insert(alerts).values(date=_get_random_date(), city_id=random.randint(1, len(random_cities)),
+                                  overall_aqi=random.randint(1, 10), aqi_level=random.choice(levels))
         )
 
     with ENGINE.connect() as connection:
@@ -61,17 +61,80 @@ async def fill_dummy_data():
         for stmt in report_stmt:
             connection.execute(stmt)
 
+        for stmt in alert_stmt:
+            connection.execute(stmt)
+
         connection.commit()
         LOGGER.info("Inserted successfully with Core.")
 
 
-def close_session():
+def close_session() -> None:
     SESSION.close()
 
 
-async def get_air_quality_by_time_range(start_date: datetime.date, end_date: datetime.date):
+async def get_cities_to_id_map() -> Dict[str, str]:
+    existing_cities = SESSION.execute(select(City.id, City.name)).mappings().all()
+
+    existing_map = {row["name"]: row["id"] for row in existing_cities}
+
+    return existing_map
+
+
+async def insert_cities(city_names_df: pd.DataFrame) -> None:
+    city_names_df = city_names_df.rename(columns={"city": "name"})
+
+    stmt = insert(City).values(city_names_df.to_dict(orient="records"))
+    stmt = stmt.on_conflict_do_nothing(index_elements=["name"])  # assumes unique(name)
+
+    SESSION.execute(stmt)
+    SESSION.commit()
+
+
+async def insert_reports(reports_df: pd.DataFrame, city_name_to_id_map: Dict[str, str]) -> None:
+    reports_to_insert = []
+    alerts_to_insert = []
+
+    reports_df = reports_df.rename(columns={"city": "name"})
+
+    vectorised_calc_aqi = np.vectorize(calculate_aqi)
+    reports_df["overall_aqi"], reports_df["aqi_level"] = vectorised_calc_aqi(reports_df["PM2.5"], reports_df["NO2"],
+                                                                             reports_df["CO2"])
+
+    LOGGER.info(reports_df)
+
+    for _, row in reports_df.iterrows():
+        city_id = city_name_to_id_map.get(row["name"])
+
+        reports_to_insert.append(
+            Report(
+                city_id=city_id,
+                date=pd.to_datetime(row["date"]).date(),
+                pm2_5=int(row["PM2.5"]),
+                no2=int(row["NO2"]),
+                co2=int(row["CO2"]),
+                overall_aqi=int(row["overall_aqi"]),
+                aqi_level=row["aqi_level"]
+            )
+        )
+
+        if row["overall_aqi"] > 300:
+            alerts_to_insert.append(
+                Alert(
+                    date=pd.to_datetime(row["date"]).date(),
+                    city_id=city_id,
+                    overall_aqi=int(row["overall_aqi"]),
+                    aqi_level=row["aqi_level"]
+                )
+            )
+
+    SESSION.bulk_save_objects(reports_to_insert)
+    SESSION.bulk_save_objects(alerts_to_insert)
+    SESSION.commit()
+
+
+async def get_air_quality_by_time_range(start_date: datetime.date, end_date: datetime.date) -> list[AirQualityDataRow]:
     stmt = (
-        select(City.id, City.name, Report.date)
+        select(City.name, Report.date, Report.pm2_5, Report.no2, Report.co2, Report.overall_aqi, Report.aqi_level)
         .select_from(City)
         .join(Report, City.id == Report.city_id)
         .where(
@@ -81,7 +144,41 @@ async def get_air_quality_by_time_range(start_date: datetime.date, end_date: dat
     )
 
     results = SESSION.execute(stmt).mappings().all()
-    return results
+    data_rows = [AirQualityDataRow(
+            city_name=row['name'],
+            report_date=row['date'],
+            pm2_5_value=row['pm2_5'],
+            no2_value=row['no2'],
+            co2_value=row['co2'],
+            overall_aqi=row["overall_aqi"],
+            aqi_level=row["aqi_level"]
+        ) for row in results]
+
+    return data_rows
+
+
+async def get_air_quality_by_city_name(city_name: str) -> list[AirQualityDataRow]:
+    stmt = (
+        select(City.name, Report.date, Report.pm2_5, Report.no2, Report.co2)
+        .select_from(City)
+        .join(Report, City.id == Report.city_id)
+        .where(
+            (City.name == city_name)
+        )
+    )
+
+    results = SESSION.execute(stmt).mappings().all()
+    data_rows = [AirQualityDataRow(
+            city_name=row['name'],
+            report_date=row['date'],
+            pm2_5_value=row['pm2_5'],
+            no2_value=row['no2'],
+            co2_value=row['co2'],
+            overall_aqi=row["overall_aqi"],
+            aqi_level=row["aqi_level"]
+        ) for row in results]
+
+    return data_rows
 
 
 if __name__ == '__main__':

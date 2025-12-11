@@ -1,9 +1,16 @@
-from datetime import date
+from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, UploadFile, Response, status
+import numpy as np
 from pydantic import BaseModel
+import pandas as pd
+from starlette.responses import Response
 
+from entities.airQualityDataRow import AirQualityDataRow
+import db.db_functions as db_funcs
+from utils.utils import is_valid_date, fill_weather_report
+from consts import METHOD, LOGGER, USE_DATA_FILL
 
 router = APIRouter(
     prefix="/air_quality",
@@ -16,19 +23,40 @@ class Item(BaseModel):
     description: Optional[str] = None
 
 
-@router.post("/")
-async def update_air_quality(item: Item):
+@router.post("/upload/")
+async def upload_air_quality_handler(file: UploadFile) -> Response:
     """
-    This function adds to the database the weather data it receives
-    :param item: a multipart/form-data request containing a CSV file.
-    :return:
+    This function adds to the database the weather data it receives and alerts if there are
+    :param file: a multipart/form-data request containing a CSV file.
+    :return: a response if created successfully
     """
+    data_df = pd.read_csv(file.file)
 
-    return {"air_quality": "good"}
+    if USE_DATA_FILL:
+        LOGGER.info("used auto fill")
+        fill_weather_report(data_df, METHOD)
+    else:
+        if data_df.isnull().values.any():
+            raise HTTPException(status_code=400, detail="Make sure the file is full and there are no empty cells")
+
+    vectorized_check = np.vectorize(is_valid_date)
+    if not vectorized_check(data_df["date"]).all():
+        raise HTTPException(status_code=400, detail="Make sure the dates are in the right format")
+
+    city_names_df = data_df[["city"]].drop_duplicates()
+    await db_funcs.insert_cities(city_names_df)
+
+    report_data_df = data_df[["date", "city", "PM2.5", "NO2", "CO2"]]
+    city_name_to_id_map = await db_funcs.get_cities_to_id_map()
+    await db_funcs.insert_reports(report_data_df, city_name_to_id_map)
+
+    LOGGER.info(f"cities_inserted: {len(city_names_df)}\nreports_inserted: {len(report_data_df)}")
+
+    return Response(status_code=status.HTTP_201_CREATED)
 
 
 @router.get("/by_time/")
-async def get_air_quality_by_time_range(start_date: date, end_date: date):
+async def get_air_quality_by_time_range_handler(start_date: str, end_date: str) -> list[AirQualityDataRow]:
     """
     This function gets the weather data within a range for all the cities
     :param start_date: initial date of the range
@@ -36,17 +64,30 @@ async def get_air_quality_by_time_range(start_date: date, end_date: date):
     :return: the weather within the range for all the cities
     """
 
-    return {"air_quality": f"from {start_date} to {end_date}"}
+    if not is_valid_date(start_date) or not is_valid_date(end_date):
+        raise HTTPException(status_code=422, detail="Dates not in format YYYY-MM-DD")
+
+    start_date, end_date = datetime.strptime(start_date, "%Y-%m-%d"), datetime.strptime(end_date, "%Y-%m-%d")
+
+    aqi_list = await db_funcs.get_air_quality_by_time_range(start_date, end_date)
+
+    if not aqi_list:
+        raise HTTPException(status_code=404, detail="No AQI data for this time range")
+
+    return aqi_list
 
 
 @router.get("/by_city/")
-async def get_air_quality_by_city(city_name: str):
+async def get_air_quality_by_city_handler(city_name: str) -> list[AirQualityDataRow]:
     """
     This function gets all the weather data for a given city
     :param city_name: the name of the city to get the weather from
     :return: all the weather in the city
     """
 
-    return {"air_quality": f"from {city_name}"}
+    aqi_list = await db_funcs.get_air_quality_by_city_name(city_name)
 
+    if not aqi_list:
+        raise HTTPException(status_code=404, detail=f"No AQI data for the city {city_name}")
 
+    return aqi_list

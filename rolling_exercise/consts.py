@@ -34,12 +34,10 @@ alchemy_logger.setLevel(logging.INFO)
 
 logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
-
 USER = os.getenv("DB_USER")
 PASSWORD = os.getenv("DB_PASSWORD")
 DB = "prepSQL"
 SCHEME = "rolling_exercise"
-
 
 ENGINE = create_engine(
     f"postgresql://{USER}:{PASSWORD}@localhost/{DB}?options=-csearch_path={SCHEME}",
@@ -48,3 +46,17 @@ ENGINE = create_engine(
 
 Session = sessionmaker(bind=ENGINE)
 SESSION = Session()
+
+USE_DUMMY_DATASET = False
+USE_DATA_FILL = True
+DATA_PATH = os.getenv("DATA_PATH")
+METHOD = "from_data"
+
+PM25_MEDIAN = 15
+PM25_SIGMA = 0.8
+
+NO2_MEDIAN = 30
+NO2_SIGMA = 0.7
+
+CO2_MEAN = 420
+CO2_STD = 50

@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
 router = APIRouter(
-    prefix="/aqi",
-    tags=["AQI"]
+    prefix="/aqi_statistics",
+    tags=["AQI Statistics"]
 )
 
 

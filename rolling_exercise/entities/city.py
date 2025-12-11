@@ -11,3 +11,4 @@ class City(BASE):
     name = Column(String)
 
     reports = relationship("Report", back_populates="city")
+    alerts = relationship("Alert", back_populates="city")

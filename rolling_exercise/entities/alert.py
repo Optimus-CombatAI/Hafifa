@@ -4,17 +4,15 @@ from sqlalchemy.orm import relationship
 from consts import BASE
 
 
-class Report(BASE):
-    __tablename__ = 'reports'
+class Alert(BASE):
+    __tablename__ = 'alerts'
 
     id = Column(Integer, primary_key=True)
     date = Column(Date)
     city_id = Column(Integer, ForeignKey('cities.id', ondelete='CASCADE'))
-    pm2_5 = Column(Integer)
-    no2 = Column(Integer)
-    co2 = Column(Integer)
     overall_aqi = Column(Integer)
     aqi_level = Column(String)
 
-    city = relationship("City", back_populates="reports")
+    city = relationship("City", back_populates="alerts")
+
 

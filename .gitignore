@@ -3,6 +3,7 @@
 *.png
 .*
 *.csv
+*.txt
 __*
 
 clean_code/const.py
