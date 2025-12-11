@@ -6,38 +6,41 @@ from typing import List
 from playwright.async_api import async_playwright, Browser, Page
 from bs4 import BeautifulSoup
 
-from consts import INPUT_FILE, OUTPUT_DIR
+from consts import INPUT_FILE, OUTPUT_DIR, PAGE_TIMEOUT_MS,SCREENSHOT_PATH_NAME,JSON_PATH_NAME
 from logger_config import logger
 
 
-# ============================================================
-#  READ URL FILE
-# ============================================================
-def read_urls(file_path: str) -> List[str]:
+def read_non_empty_lines(file_path: str) -> List[str]:
     """
-    Read URL list from input file.
-    Returns a clean list of non-empty URLs.
+    Read all non-empty stripped lines from a text file.
+    This function is generic and does not assume the content type.
     """
-    logger.info(f"Reading input file: {file_path}")
+    logger.info(f"Reading text file: {file_path}")
 
     with open(file_path, "r", encoding="utf-8") as file:
-        urls = [line.strip() for line in file if line.strip()]
+        lines = [line.strip() for line in file if line.strip()]
 
-    logger.debug(f"Found {len(urls)} URLs")
+    logger.debug(f"Found {len(lines)} non-empty lines")
 
-    return urls
+    return lines
 
 
-# ============================================================
-#  CREATE OUTPUT FOLDERS
-# ============================================================
+async def navigate_page(page: Page, url: str) -> None:
+    """
+    Navigate to a URL with consistent loading behavior.
+    Separated for clarity and to avoid repeating logic.
+    """
+    logger.debug(f"Navigating to: {url}")
+    await page.goto(url, wait_until="domcontentloaded", timeout=PAGE_TIMEOUT_MS)
+
+
 def create_output_folders(urls: List[str]) -> None:
     """
     Create output/url_N folders for each URL.
     """
     logger.info("Creating output folders...")
 
-    os.makedirs(OUTPUT_DIR, exist_ok=True) #if already exist continue...
+    os.makedirs(OUTPUT_DIR, exist_ok=True) 
 
     for index in range(1, len(urls) + 1):
         folder = os.path.join(OUTPUT_DIR, f"url_{index}")
@@ -46,9 +49,7 @@ def create_output_folders(urls: List[str]) -> None:
     logger.debug("Output folder structure created successfully.")
 
 
-# ============================================================
-#  FETCH HTML
-# ============================================================
+
 async def get_html(page: Page, url: str) -> str:
     """
     Load a web page and return its HTML content, prettified
@@ -56,53 +57,49 @@ async def get_html(page: Page, url: str) -> str:
     """
     logger.debug(f"Loading HTML for: {url}")
 
-    await page.goto(url, wait_until="domcontentloaded", timeout=120_000)#only HTML structure
+    await navigate_page(page,url)
     raw_html = await page.content()
 
-    # Prettify HTML with BeautifulSoup
-    soup = BeautifulSoup(raw_html, "html.parser")
-    pretty_html = soup.prettify()
-
-    logger.debug(f"HTML fetched for {url} (size={len(pretty_html)} chars)")
-    return pretty_html
+    prettified_html = BeautifulSoup(raw_html, "html.parser").prettify()
 
 
-# ============================================================
-#  FETCH RESOURCES
-# ============================================================
+    logger.debug(f"HTML fetched for {url} (size={len(prettified_html)} chars)")
+
+    return prettified_html
+
+
+
 async def get_resources(page: Page, url: str) -> List[str]:
     """
     Collect all resource URLs loaded by the page.
     """
-    resources: List[str] = []
     logger.debug(f"Collecting resources for {url}")
+    resources: List[str] = []
 
     page.on("request", lambda req: resources.append(req.url))
 
-    await page.goto(url, wait_until="domcontentloaded", timeout=120_000)#Reload the page to ensure a clean state and capture all initial network requests.
+    await navigate_page(page,url)
 
     logger.debug(f"Collected {len(resources)} resources for {url}")
+
     return resources
 
 
-# ============================================================
-#  SCREENSHOT
-# ============================================================
+
 async def take_screenshot(page: Page, output_path: str) -> str:
     """
     Take screenshot of the entire page.
     """
     logger.debug(f"Taking screenshot: {output_path}")
 
-    await page.screenshot(path=output_path, full_page=True, timeout=120_000)
+    await page.screenshot(path=output_path, full_page=True, timeout=PAGE_TIMEOUT_MS)
 
     logger.debug("Screenshot saved.")
+
     return output_path
 
 
-# ============================================================
-#  BASE64 ENCODE
-# ============================================================
+
 def encode_screenshot_to_base64(path: str) -> str:
     """
     Convert screenshot binary file to a base64 string.
@@ -113,25 +110,28 @@ def encode_screenshot_to_base64(path: str) -> str:
         encoded = base64.b64encode(image.read()).decode("utf-8")
 
     logger.debug("Screenshot converted to base64.")
+
     return encoded
 
 
-# ============================================================
-#  PROCESS ONE URL
-# ============================================================
-async def process_url(browser: Browser, url: str, index: int) -> None:
+
+async def process_url(browser: Browser, url: str, output_folder: str) -> None:
     """
     Process a single URL:
     - Fetch HTML (prettified)
     - Fetch resources
     - Take screenshot
     - Write browse.json
-    """
-    logger.info(f"Processing URL #{index}: {url}")
 
-    folder = os.path.join(OUTPUT_DIR, f"url_{index}")
-    screenshot_path = os.path.join(folder, "screenshot.png")
-    json_path = os.path.join(folder, "browse.json")
+    Args:
+        browser (Browser): Playwright browser instance.
+        url (str): URL to scrape.
+        output_folder (str): Already-built folder path where output files will be stored.
+    """
+    logger.info(f"Processing URL: {url}")
+
+    screenshot_path = os.path.join(output_folder, SCREENSHOT_PATH_NAME)
+    json_path = os.path.join(output_folder, JSON_PATH_NAME)
 
     page = await browser.new_page()
 
@@ -139,18 +139,18 @@ async def process_url(browser: Browser, url: str, index: int) -> None:
         html = await get_html(page, url)
         resources = await get_resources(page, url)
         await take_screenshot(page, screenshot_path)
-        screenshot_b64 = encode_screenshot_to_base64(screenshot_path)
+        screenshot_encoded_to_b64 = encode_screenshot_to_base64(screenshot_path)
 
         data = {
-            "html": html,              
+            "html": html,
             "resources": resources,
-            "screenshot": screenshot_b64,
+            "screenshot": screenshot_encoded_to_b64,
         }
 
-        with open(json_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=4, ensure_ascii=False)
+        with open(json_path, "w", encoding="utf-8") as json_file:
+            json.dump(data, json_file, indent=4, ensure_ascii=False)
 
-        logger.info(f"Finished URL #{index}")
+        logger.info(f"Finished processing: {url}")
 
     except Exception as e:
         logger.error(f"Error while processing {url}: {e}")
@@ -159,19 +159,18 @@ async def process_url(browser: Browser, url: str, index: int) -> None:
         await page.close()
 
 
-# ============================================================
-#  ASYNC RUNNER
-# ============================================================
+
+
 async def run() -> None:
-    """Main async runner for the scraper."""
-    urls = read_urls(INPUT_FILE)
+    urls = read_non_empty_lines(INPUT_FILE)
     create_output_folders(urls)
 
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+    async with async_playwright() as playwright:
+        browser = await playwright.chromium.launch(headless=True)
 
         tasks = [
-            process_url(browser, url, index)
+            process_url(browser,url,os.path.join(OUTPUT_DIR, f"url_{index}") )
+
             for index, url in enumerate(urls, start=1)
         ]
 
@@ -181,8 +180,6 @@ async def run() -> None:
     logger.info("All URLs processed successfully.")
 
 
-# ============================================================
-#  ENTRY POINT
-# ============================================================
+
 if __name__ == "__main__":
     asyncio.run(run())
