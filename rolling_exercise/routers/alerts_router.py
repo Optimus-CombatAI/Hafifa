@@ -1,5 +1,9 @@
-from fastapi import APIRouter
-from datetime import date
+from fastapi import APIRouter, HTTPException
+from datetime import datetime
+
+from entities.alertReturnRow import AlertReturnRow
+import db.db_functions as db_funcs
+from utils.utils import is_valid_date
 
 router = APIRouter(
     prefix="/alerts",
@@ -8,30 +12,51 @@ router = APIRouter(
 
 
 @router.get("/")
-async def get_all_alerts():
+async def get_all_alerts_handler() -> list[AlertReturnRow]:
     """
     This function returns all the recorded alerts
     :return: all the recorded alerts
     """
-    return {"air_quality": f"... "}
+    alerts = await db_funcs.get_all_alerts()
+
+    if not alerts:
+        raise HTTPException(status_code=404, detail=f"No alerts found")
+
+    return alerts
 
 
-@router.get("/by_date")
-async def get_alerts_by_date(day_date: date):
+@router.get("/since")
+async def get_alerts_by_date_handler(start_date: str) -> list[AlertReturnRow]:
     """
     This function returns all the recorded alerts that happened during the day
-    :param day_date: the date of the day to get the alerts from
+    :param start_date: the date of the day to get the alerts from
     :return: recorded alerts that happened during the day
     """
+    if not is_valid_date(start_date):
+        raise HTTPException(status_code=422, detail="Dates not in format YYYY-MM-DD or not valid")
 
-    return {"air_quality": f"from {day_date}"}
+    start_date = datetime.strptime(start_date, "%Y-%m-%d")
+
+    alerts_from_start_date = await db_funcs.get_alerts_since_date(start_date)
+
+    if not alerts_from_start_date:
+        raise HTTPException(status_code=404, detail=f"No alerts found")
+
+    return alerts_from_start_date
 
 
 @router.get("/by_city")
-async def get_alerts_by_city(city_name: str):
+async def get_alerts_by_city_handler(city_name: str) -> list[AlertReturnRow]:
     """
     This function returns all the recorded alerts that happened in the city
     :param city_name: the name of the city to get the alerts from
     :return: recorded alerts that happened in the city
     """
-    return {"air_quality": f"from {city_name}"}
+
+    alerts_from_city = await db_funcs.get_alerts_from_city(city_name)
+
+    if not alerts_from_city:
+        raise HTTPException(status_code=404, detail=f"No alerts found")
+
+    return alerts_from_city
+

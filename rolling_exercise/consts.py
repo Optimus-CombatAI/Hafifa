@@ -48,7 +48,7 @@ Session = sessionmaker(bind=ENGINE)
 SESSION = Session()
 
 USE_DUMMY_DATASET = False
-USE_DATA_FILL = True
+USE_DATA_FILL = False
 DATA_PATH = os.getenv("DATA_PATH")
 METHOD = "from_data"
 
@@ -60,3 +60,5 @@ NO2_SIGMA = 0.7
 
 CO2_MEAN = 420
 CO2_STD = 50
+
+DUPLICATION_ERROR = '23505'

@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 import db.db_functions as db_funcs
 from entities.AQIDataRow import AQIDataRow
 
+
 router = APIRouter(
     prefix="/aqi_statistics",
     tags=["AQI Statistics"]

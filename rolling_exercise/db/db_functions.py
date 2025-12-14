@@ -9,13 +9,14 @@ from sqlalchemy import text, select, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 
-from consts import ENGINE, LOGGER, META_DATA, SESSION
+from consts import ENGINE, LOGGER, META_DATA, SESSION, DUPLICATION_ERROR
 from db.cities_table import cities
 from db.reports_table import reports
 from db.alerts_table import alerts
 from entities.city import City
 from entities.report import Report
 from entities.alert import Alert
+from entities.alertReturnRow import AlertReturnRow
 from entities.airQualityDataRow import AirQualityDataRow
 from entities.AQIDataRow import AQIDataRow
 from entities.duplicateDataException import DuplicateDataException
@@ -110,19 +111,11 @@ async def _extract_city_name_and_date(error_message: str) -> tuple[str, datetime
         return city_name, date
 
 
-async def insert_reports(reports_df: pd.DataFrame) -> None:
+async def _get_reports_and_alerts(reports_df: pd.DataFrame) -> tuple[list[Report], list[Alert]]:
     city_name_to_id_map = await get_cities_to_id_map()
 
     reports_to_insert = []
     alerts_to_insert = []
-
-    reports_df = reports_df.rename(columns={"city": "name"})
-
-    vectorised_calc_aqi = np.vectorize(calculate_aqi)
-    reports_df["overall_aqi"], reports_df["aqi_level"] = vectorised_calc_aqi(reports_df["PM2.5"], reports_df["NO2"],
-                                                                             reports_df["CO2"])
-
-    LOGGER.info(reports_df)
 
     for _, row in reports_df.iterrows():
         city_id = city_name_to_id_map.get(row["name"])
@@ -148,6 +141,22 @@ async def insert_reports(reports_df: pd.DataFrame) -> None:
                     aqi_level=row["aqi_level"]
                 )
             )
+
+    return reports_to_insert, alerts_to_insert
+
+
+async def insert_reports(reports_df: pd.DataFrame) -> None:
+
+    reports_df = reports_df.rename(columns={"city": "name"})
+
+    vectorised_calc_aqi = np.vectorize(calculate_aqi)
+    reports_df["overall_aqi"], reports_df["aqi_level"] = vectorised_calc_aqi(reports_df["PM2.5"], reports_df["NO2"],
+                                                                             reports_df["CO2"])
+
+    LOGGER.info(reports_df)
+
+    reports_to_insert, alerts_to_insert = await _get_reports_and_alerts(reports_df)
+
     try:
         SESSION.bulk_save_objects(reports_to_insert)
         SESSION.bulk_save_objects(alerts_to_insert)
@@ -156,9 +165,8 @@ async def insert_reports(reports_df: pd.DataFrame) -> None:
         SESSION.rollback()
         pgcode = getattr(e.orig, 'pgcode', None)
 
-        if pgcode == '23505':
-            orig = e.orig
-            diag = getattr(orig, "diag", None)
+        if pgcode == DUPLICATION_ERROR:
+            diag = getattr(e.orig, "diag", None)
             detail_msg = getattr(diag, "message_detail", None)
             city_name, date = await _extract_city_name_and_date(detail_msg)
 
@@ -283,6 +291,87 @@ async def get_3_best_cities() -> list[str]:
     return city_names
 
 
+async def get_all_alerts() -> list[AlertReturnRow]:
+    stmt = (
+        select(
+            Alert.id,
+            Alert.date,
+            City.name,
+            Alert.overall_aqi,
+            Alert.aqi_level
+        )
+        .select_from(Alert)
+        .join(City, City.id == Alert.city_id)
+    )
+
+    results = SESSION.execute(stmt).mappings().all()
+    alerts_list = [
+        AlertReturnRow(
+            id=row["id"],
+            date=row["date"],
+            city_name=row["name"],
+            overall_aqi=row["overall_aqi"],
+            aqi_level=row["aqi_level"]
+        )
+        for row in results]
+
+    return alerts_list
+
+
+async def get_alerts_since_date(start_date: datetime.date) -> list[AlertReturnRow]:
+    stmt = (
+        select(
+            Alert.id,
+            Alert.date,
+            City.name,
+            Alert.overall_aqi,
+            Alert.aqi_level
+        )
+        .select_from(Alert)
+        .join(City, City.id == Alert.city_id)
+        .where(Alert.date > start_date)
+    )
+
+    results = SESSION.execute(stmt).mappings().all()
+    alerts_list = [
+        AlertReturnRow(
+            id=row["id"],
+            date=row["date"],
+            city_name=row["name"],
+            overall_aqi=row["overall_aqi"],
+            aqi_level=row["aqi_level"]
+        )
+        for row in results]
+
+    return alerts_list
+
+
+async def get_alerts_from_city(city_name: str) -> list[AlertReturnRow]:
+    stmt = (
+        select(
+            Alert.id,
+            Alert.date,
+            City.name,
+            Alert.overall_aqi,
+            Alert.aqi_level
+        )
+        .select_from(Alert)
+        .join(City, City.id == Alert.city_id)
+        .where(City.name == city_name)
+    )
+
+    results = SESSION.execute(stmt).mappings().all()
+    alerts_list = [
+        AlertReturnRow(
+            id=row["id"],
+            date=row["date"],
+            city_name=row["name"],
+            overall_aqi=row["overall_aqi"],
+            aqi_level=row["aqi_level"]
+        )
+        for row in results]
+
+    return alerts_list
 
 
 if __name__ == '__main__':

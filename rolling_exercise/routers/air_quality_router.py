@@ -69,7 +69,7 @@ async def get_air_quality_by_time_range_handler(start_date: str, end_date: str) 
     """
 
     if not is_valid_date(start_date) or not is_valid_date(end_date):
-        raise HTTPException(status_code=422, detail="Dates not in format YYYY-MM-DD")
+        raise HTTPException(status_code=422, detail="Dates not in format YYYY-MM-DD or not valid")
 
     start_date, end_date = datetime.strptime(start_date, "%Y-%m-%d"), datetime.strptime(end_date, "%Y-%m-%d")
 
