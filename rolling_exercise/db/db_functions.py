@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
 import random
+import re
 from typing import Dict
 
 import numpy as np
 import pandas as pd
-from sqlalchemy import text, select
+from sqlalchemy import text, select, func
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
 
 from consts import ENGINE, LOGGER, META_DATA, SESSION
 from db.cities_table import cities
@@ -15,7 +17,10 @@ from entities.city import City
 from entities.report import Report
 from entities.alert import Alert
 from entities.airQualityDataRow import AirQualityDataRow
+from entities.AQIDataRow import AQIDataRow
+from entities.duplicateDataException import DuplicateDataException
 from utils.calculate_aqi import calculate_aqi
+from utils.utils import get_aqi_level
 
 
 async def set_up_db() -> None:
@@ -90,7 +95,24 @@ async def insert_cities(city_names_df: pd.DataFrame) -> None:
     SESSION.commit()
 
 
-async def insert_reports(reports_df: pd.DataFrame, city_name_to_id_map: Dict[str, str]) -> None:
+async def _extract_city_name_and_date(error_message: str) -> tuple[str, datetime.date]:
+
+    pattern = r"\((\d{4}-\d{2}-\d{2}),\s*(\d+)\)"
+    match = re.search(pattern, error_message)
+
+    if match:
+        date = datetime.strptime(match.group(1), '%Y-%m-%d').date()
+        city_id = int(match.group(2))
+
+        name_to_id_map = await get_cities_to_id_map()
+        city_name = next((k for k, v in name_to_id_map.items() if v == city_id), None)
+
+        return city_name, date
+
+
+async def insert_reports(reports_df: pd.DataFrame) -> None:
+    city_name_to_id_map = await get_cities_to_id_map()
+
     reports_to_insert = []
     alerts_to_insert = []
 
@@ -126,9 +148,22 @@ async def insert_reports(reports_df: pd.DataFrame, city_name_to_id_map: Dict[str
                     aqi_level=row["aqi_level"]
                 )
             )
+    try:
+        SESSION.bulk_save_objects(reports_to_insert)
+        SESSION.bulk_save_objects(alerts_to_insert)
 
-    SESSION.bulk_save_objects(reports_to_insert)
-    SESSION.bulk_save_objects(alerts_to_insert)
+    except IntegrityError as e:
+        SESSION.rollback()
+        pgcode = getattr(e.orig, 'pgcode', None)
+
+        if pgcode == '23505':
+            orig = e.orig
+            diag = getattr(orig, "diag", None)
+            detail_msg = getattr(diag, "message_detail", None)
+            city_name, date = await _extract_city_name_and_date(detail_msg)
+
+            raise DuplicateDataException(city_name, date)
+
     SESSION.commit()
 
 
@@ -159,7 +194,7 @@ async def get_air_quality_by_time_range(start_date: datetime.date, end_date: dat
 
 async def get_air_quality_by_city_name(city_name: str) -> list[AirQualityDataRow]:
     stmt = (
-        select(City.name, Report.date, Report.pm2_5, Report.no2, Report.co2)
+        select(City.name, Report.date, Report.pm2_5, Report.no2, Report.co2, Report.overall_aqi, Report.aqi_level)
         .select_from(City)
         .join(Report, City.id == Report.city_id)
         .where(
@@ -179,6 +214,75 @@ async def get_air_quality_by_city_name(city_name: str) -> list[AirQualityDataRow
         ) for row in results]
 
     return data_rows
+
+
+async def get_aqi_history_by_city(city_name: str) -> list[AQIDataRow]:
+    stmt = (
+        select(City.name, Report.date, Report.pm2_5, Report.no2, Report.co2, Report.overall_aqi, Report.aqi_level)
+        .select_from(City)
+        .join(Report, City.id == Report.city_id)
+        .where(
+            (City.name == city_name)
+        )
+    )
+
+    results = SESSION.execute(stmt).mappings().all()
+    data_rows = [AQIDataRow(
+            overall_aqi=row["overall_aqi"],
+            aqi_level=row["aqi_level"]
+        ) for row in results]
+
+    return data_rows
+
+
+async def get_aqi_avg_by_city(city_name: str) -> AQIDataRow:
+    stmt = (
+        select(
+            City.name,
+            func.avg(Report.overall_aqi)
+        )
+        .select_from(City)
+        .join(Report, City.id == Report.city_id)
+        .where(City.name == city_name)
+        .group_by(City.id)
+    )
+
+    results = SESSION.execute(stmt).mappings().all()
+
+    if not results:
+        return AQIDataRow(
+            overall_aqi=-1,
+            aqi_level="undefined"
+        )
+
+    overall_aqi = int(results[0]["avg"])
+    data_row = AQIDataRow(
+            overall_aqi=overall_aqi,
+            aqi_level=get_aqi_level(overall_aqi)
+        )
+
+    return data_row
+
+
+async def get_3_best_cities() -> list[str]:
+    stmt = (
+        select(
+            City.name,
+            func.max(Report.overall_aqi)
+        )
+        .select_from(City)
+        .join(Report, City.id == Report.city_id)
+        .group_by(City.id)
+        .order_by(func.max(Report.overall_aqi).desc())
+        .limit(3)
+    )
+
+    results = SESSION.execute(stmt).mappings().all()
+    city_names = [row["name"] for row in results]
+
+    return city_names
+
+
 
 
 if __name__ == '__main__':

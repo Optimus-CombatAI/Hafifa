@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Table, Column, Integer, String, Date, ForeignKey, UniqueConstraint
 from consts import META_DATA
 
 
@@ -12,4 +12,7 @@ reports = Table(
     Column('co2', Integer),
     Column('overall_aqi', Integer),
     Column('aqi_level', String),
+
+    UniqueConstraint('date', 'city_id'),
+
 )

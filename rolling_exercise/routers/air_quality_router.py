@@ -1,16 +1,17 @@
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, UploadFile, Response, status
 import numpy as np
-from pydantic import BaseModel
 import pandas as pd
+from fastapi import APIRouter, HTTPException, UploadFile, status
+from pydantic import BaseModel
 from starlette.responses import Response
 
-from entities.airQualityDataRow import AirQualityDataRow
 import db.db_functions as db_funcs
-from utils.utils import is_valid_date, fill_weather_report
 from consts import METHOD, LOGGER, USE_DATA_FILL
+from entities.airQualityDataRow import AirQualityDataRow
+from entities.duplicateDataException import DuplicateDataException
+from utils.utils import is_valid_date, fill_weather_report
 
 router = APIRouter(
     prefix="/air_quality",
@@ -23,7 +24,7 @@ class Item(BaseModel):
     description: Optional[str] = None
 
 
-@router.post("/upload/")
+@router.post("/upload")
 async def upload_air_quality_handler(file: UploadFile) -> Response:
     """
     This function adds to the database the weather data it receives and alerts if there are
@@ -47,15 +48,18 @@ async def upload_air_quality_handler(file: UploadFile) -> Response:
     await db_funcs.insert_cities(city_names_df)
 
     report_data_df = data_df[["date", "city", "PM2.5", "NO2", "CO2"]]
-    city_name_to_id_map = await db_funcs.get_cities_to_id_map()
-    await db_funcs.insert_reports(report_data_df, city_name_to_id_map)
+    try:
+        await db_funcs.insert_reports(report_data_df)
+
+    except DuplicateDataException as duplicate_data_exception:
+        raise HTTPException(status_code=400, detail=str(duplicate_data_exception))
 
     LOGGER.info(f"cities_inserted: {len(city_names_df)}\nreports_inserted: {len(report_data_df)}")
 
     return Response(status_code=status.HTTP_201_CREATED)
 
 
-@router.get("/by_time/")
+@router.get("/by_time")
 async def get_air_quality_by_time_range_handler(start_date: str, end_date: str) -> list[AirQualityDataRow]:
     """
     This function gets the weather data within a range for all the cities
@@ -77,7 +81,7 @@ async def get_air_quality_by_time_range_handler(start_date: str, end_date: str) 
     return aqi_list
 
 
-@router.get("/by_city/")
+@router.get("/by_city")
 async def get_air_quality_by_city_handler(city_name: str) -> list[AirQualityDataRow]:
     """
     This function gets all the weather data for a given city

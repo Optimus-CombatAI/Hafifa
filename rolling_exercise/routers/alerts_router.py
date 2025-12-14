@@ -16,7 +16,7 @@ async def get_all_alerts():
     return {"air_quality": f"... "}
 
 
-@router.get("/by_date/")
+@router.get("/by_date")
 async def get_alerts_by_date(day_date: date):
     """
     This function returns all the recorded alerts that happened during the day
@@ -27,7 +27,7 @@ async def get_alerts_by_date(day_date: date):
     return {"air_quality": f"from {day_date}"}
 
 
-@router.get("/by_city/")
+@router.get("/by_city")
 async def get_alerts_by_city(city_name: str):
     """
     This function returns all the recorded alerts that happened in the city

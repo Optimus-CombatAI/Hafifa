@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Table, Column, Integer, String, Date, ForeignKey, UniqueConstraint
 
 from consts import META_DATA
 
@@ -9,4 +9,7 @@ alerts = Table(
     Column('city_id', Integer, ForeignKey('cities.id', ondelete='CASCADE')),
     Column('overall_aqi', Integer),
     Column('aqi_level', String),
+
+    UniqueConstraint('date', 'city_id'),
+
 )

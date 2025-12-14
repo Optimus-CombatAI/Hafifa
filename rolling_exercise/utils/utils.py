@@ -135,3 +135,17 @@ def fill_weather_report(report_df: pd.DataFrame, method="internet") -> None:
     else:
         LOGGER.info("adding my data")
         fill_weather_report_by_dataset_data(report_df)
+
+
+def get_aqi_level(overall_aqi: int) -> str:
+
+    aqi_thresholds = [
+        (50, "Good"),
+        (100, "Moderate"),
+        (150, "Unhealthy for Sensitive Groups"),
+        (200, "Unhealthy"),
+        (300, "Very Unhealthy"),
+        (500, "Hazardous")
+    ]
+
+    return next(level for threshold, level in aqi_thresholds if overall_aqi <= threshold)
