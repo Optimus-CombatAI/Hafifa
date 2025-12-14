@@ -30,45 +30,23 @@ Happy learning!🤍
   - [Questions and Support](#questions-and-support)
   - [Table of Contents](#table-of-contents)
   - [1. Git](#1-git)
-    - [Duration: 1 Day](#duration-1-day)
   - [2. Clean Code](#2-clean-code)
-    - [Duration: 1 Day](#duration-1-day-1)
   - [3. Web Scraping](#3-web-scraping)
-    - [Duration: 1 Day](#duration-1-day-2)
   - [4. Threading and MultiProcessing](#4-threading-and-multiprocessing)
-    - [Duration: 2 Days](#duration-2-days)
   - [5. Databases](#5-databases)
-    - [Duration: 1 Day](#duration-1-day-3)
-      - [5.1. PostgreSQL](#51-postgresql)
-      - [5.2. MongoDB](#52-mongodb)
-      - [5.3. S3](#53-s3)
-      - [5.4. Redis](#54-redis)
   - [6. SQL](#6-sql)
-    - [Duration: 5 hours](#duration-5-hours)
   - [7. Building API](#7-building-api)
-    - [Duration: 0.5 Day](#duration-05-day)
-      - [7.1. FastAPI](#71-fastapi)
-      - [7.2. SQLAlchemy](#72-sqlalchemy)
   - [8. Testing](#8-testing)
-    - [Duration: 0.5 Days](#duration-05-days)
   - [9. Useful Python Libraries](#9-useful-python-libraries)
-    - [Duration: 1 Day](#duration-1-day-4)
-  - [10. Rolling Exercise](#10-rolling-exercise)
-    - [Duration: 5 Days](#duration-5-days)
-  - [11. Data Engineering](#11-data-engineering)
-    - [Duration: 1 Hour](#duration-1-hour)
-  - [12. Kafka🩷](#12-kafka)
-    - [Duration: 4 Hour](#duration-4-hours)
-  - [13. Streaming](#13-streaming)
-     - [Duration: 3 hours](#duration-3-hours)
-  - [14. Splunk](#14-splunk)
-    - [Duration: 1 Hour](#duration-1-hour-2)
-  - [15. Data Warehouse \\ Data Lake](#15-data-warehouse--data-lake)
-    - [Duration: 2 Days](#duration-2-days-1)
-  - [16. Trino](#16-trino)
-    - [Duration: 0.5 Hour](#duration-05-hour)
-  - [17. Airflow](#17-airflow)
-    - [Duration: 4 Hours](#duration-4-hours-1)
+  - [10. Advanced Python](#10-advanced-python)
+  - [11. Rolling Exercise](#11-rolling-exercise)
+  - [12. Data Engineering](#12-data-engineering)
+  - [13. Kafka🩷](#13-kafka)
+  - [14. Streaming](#14-streaming)
+  - [15. Splunk](#15-splunk)
+  - [16. Data Warehouse \\ Data Lake](#16-data-warehouse--data-lake)
+  - [17. Trino](#17-trino)
+  - [18. Airflow](#18-airflow)
    
 ---
 
@@ -133,6 +111,7 @@ A tutorial on postgreSQL (We know you've learnt it already, but go over it quick
 
 #### 5.2. MongoDB
 - [Mongo Interactive Tutorial](https://www.mongodb.com/docs/manual/tutorial/getting-started/)
+- [Excersice](https://www.w3resource.com/mongodb-exercises/) - do 5 random exercises 
 
 #### 5.3. S3
 Quick overview about s3
@@ -195,7 +174,22 @@ Inroduction to Redis and learning the syntax
 
 ---
 
-## 10. Rolling Exercise
+## 10. Advanced Python
+
+### Duration: 7 hours
+
+ - [Generators](https://realpython.com/introduction-to-python-generators/)
+ - [Decorators](https://realpython.com/primer-on-python-decorators/)
+ - [Context Manager](https://realpython.com/python-with-statement/)
+ - [Iterators](https://www.geeksforgeeks.org/python/iterators-in-python/)
+ - [Profiling](https://www.geeksforgeeks.org/python/memory-profiling-in-python-using-memory_profiler/)
+ - [Garbge Collection](https://www.geeksforgeeks.org/python/garbage-collection-python/)
+ - [Memory Management](https://www.geeksforgeeks.org/python/memory-management-in-python/)
+ - [Tips](https://www.geeksforgeeks.org/python/optimization-tips-python-code/)
+
+---
+
+## 11. Rolling Exercise
 
 ### Duration: 5 Days
 
@@ -205,7 +199,7 @@ There is an exercise in the `rolling_exercise/` folder where you'll need to buil
 # Before the next section please do the Newbies training - DevOps section in the TS
 ---
 
-## 11. Data Engineering
+## 12. Data Engineering
 
 ### Duration: 1 Hour
 
@@ -217,7 +211,7 @@ If you feel that you don't understand it enough, you are more than welcome to re
 
 ---
 
-## 12. Kafka🩷
+## 13. Kafka🩷
 
 ### Duration: 4 hours
 
@@ -230,7 +224,7 @@ If you feel that you don't understand it enough, you are more than welcome to re
 
 ---
 
-## 13. Streaming
+## 14. Streaming
 
 ### Duration: 3 Hours
 
@@ -248,7 +242,7 @@ There is an implementation of Kafka Streams in python named Faust. And yet Faust
   
 ---
 
-## 14. Splunk
+## 15. Splunk
 
 ### Duration: 1 Hour
 
@@ -258,7 +252,7 @@ There is an implementation of Kafka Streams in python named Faust. And yet Faust
 
 ---
 
-## 15. Data Warehouse \ Data Lake
+## 16. Data Warehouse \ Data Lake
 
 ### Duration: 2 Days
 
@@ -295,7 +289,7 @@ There is an implementation of Kafka Streams in python named Faust. And yet Faust
 
 ---
 
-## 16. Trino
+## 17. Trino
 
 ### Duration: 0.5 Hour
 
@@ -304,7 +298,7 @@ There is an implementation of Kafka Streams in python named Faust. And yet Faust
 
 ---
 
-## 17. Airflow
+## 18. Airflow
 
 ### Duration: 4 hours
 
