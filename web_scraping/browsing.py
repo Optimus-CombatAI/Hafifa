@@ -1,41 +1,39 @@
-import json
-import re
 import base64
-import requests
-import threading
+from itertools import islice
+import json
 from pathlib import Path
-from html2image import Html2Image
+import re
+import threading
 
+from html2image import Html2Image
+import requests
+
+### Constants ###
+MAX_URLS = 10
+APP_ROOT_PATH = Path(__file__).parent
 
 class WebScraper:
 
-    def __init__(self, max_urls=10):
+    def __init__(self):
         self.urls_file = "urls.input"
-        self.max_urls = max_urls
-
-        # ABSOLUTE path to the directory where THIS FILE sits
-        self.root = Path(__file__).parent
-
         self.urls = []
         self.load_urls()
     
     def load_urls(self):
-        file_path = self.root / self.urls_file
+        file_path = APP_ROOT_PATH / self.urls_file
 
         try:
             with file_path.open() as input_file:
-                for i, row in enumerate(input_file):
-                    if i >= self.max_urls:
-                        break
+                for row in islice(input_file, MAX_URLS):
                     self.urls.append(row.strip())
         except Exception as ex:
             print(f"Error loading URL file: {ex}")
 
     def take_screenshot(self, url: str, directory: Path):
         try:
-            hti = Html2Image(output_path=directory)
+            html_to_image_converter = Html2Image(output_path=directory)
             # enforce consistent file name
-            hti.screenshot(url=url, save_as="screenshot.png")
+            html_to_image_converter.screenshot(url=url, save_as="screenshot.png")
         except Exception as ex:
             print(f"Error taking screenshot of {url}: {ex}")
 
@@ -49,16 +47,19 @@ class WebScraper:
     def save_json(self, data: dict, directory: Path):
         try:
             out_file = directory / "browse.json"
-            with out_file.open("w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
+            
+            with out_file.open("w", encoding="utf-8") as out_file:
+                json.dump(data, out_file, ensure_ascii=False, indent=4)
+                
         except Exception as ex:
             print(f"Error saving JSON file: {ex}")
 
-    def extract_html(self, url: str) -> str:
+    def extract_html_from_site(self, url: str) -> str:
         try:
             return requests.get(url).text
+        
         except Exception as ex:
-            print(f"Error fetching HTML from {url}: {ex}")
+            print(f"Error fetching HTML from site{url}: {ex}")
             return ""
 
     def collect_resources(self, html: str) -> list[str]:
@@ -68,8 +69,8 @@ class WebScraper:
         img_path = directory / "screenshot.png"
 
         try:
-            with img_path.open("rb") as f:
-                return base64.b64encode(f.read()).decode("utf-8")
+            with img_path.open("rb") as image:
+                return base64.b64encode(image.read()).decode("utf-8")
         except Exception as ex:
             print(f"Error encoding screenshot in {directory}: {ex}")
             return ""
