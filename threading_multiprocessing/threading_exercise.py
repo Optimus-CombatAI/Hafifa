@@ -171,7 +171,7 @@ class StocksMine():
     def __init__(self, stocks_list: list[Stock], workers_amount = 5):
         self.workers_amount = workers_amount
         self.stocks_list = stocks_list
-        self.output_file_path = "output.csv" #os.getenv("DESTINATION_FILE") # name needs to be loaded from the env_variable.
+        self.output_file_path = os.getenv("DESTINATION_FILE") # name needs to be loaded from the env_variable.
         
     def write_stocks_changes_csv_file(self):
         stocks_changes = []
