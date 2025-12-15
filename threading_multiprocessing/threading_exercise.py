@@ -112,8 +112,7 @@ class Stock():
     def __init__(self, stock_name = "bitcoin", workers_amount = 5):
         self.stock_name = stock_name.upper()
         self.workers_amount = workers_amount
-        self.dates_file_path = f"{self.stock_name.lower()}_dates.txt"#os.getenv(f"{stock_name}_DATES") # name needs to be loaded from the env_variable.
-        # self.output_file_path = os.getenv("DESTINATION_FILE") # name needs to be loaded from the env_variable.
+        self.dates_file_path = os.getenv(f"{stock_name}_DATES") # name needs to be loaded from the env_variable.
         self.stock_changes = []
         
         self.dates = self.read_dates_file()
@@ -147,9 +146,6 @@ class Stock():
         
         return float(price["Close"].iloc[0]), float(price["Close"].iloc[1])
 
-    # def write_stock_changes_csv_file(self):
-    #     csv_saver = pd.DataFrame(self.stock_changes)
-    #     csv_saver.to_csv(self.output_file_path, index=False)
 
     def calculate_stock_changes(self, start_date) -> float: # return the change in percentage
         end_date = datetime.fromisoformat(start_date) + timedelta(days=1)
@@ -164,7 +160,6 @@ class Stock():
     def main(self):
         with ThreadPoolExecutor(max_workers=self.workers_amount) as executer:
             executer.map(self.calculate_stock_changes, self.dates)
-        #self.write_stock_changes_csv_file()
 
 
 class StocksMine():
