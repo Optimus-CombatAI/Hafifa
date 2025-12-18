@@ -1,10 +1,10 @@
 from sqlalchemy import Column, Integer, String, Date, ForeignKey
 from sqlalchemy.orm import relationship
 
-from consts import BASE
+from db.database import Base
 
 
-class Report(BASE):
+class Report(Base):
     __tablename__ = 'reports'
 
     id = Column(Integer, primary_key=True)

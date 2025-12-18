@@ -3,11 +3,13 @@ import re
 
 import numpy as np
 import pandas as pd
+import logging
 from pathlib import Path
 
+from models.pollutantsDataFrame import PollutantsDataFrame
+from settings import settings
 
-from consts import PM25_MEDIAN, PM25_SIGMA, NO2_MEDIAN, NO2_SIGMA, CO2_MEAN, CO2_STD, DATA_PATH, LOGGER
-from entities.pollutantsDataFrame import PollutantsDataFrame
+logger = logging.getLogger(__name__)
 
 
 def is_valid_date(date: str) -> bool:
@@ -47,11 +49,10 @@ def _fill_normal_distribution_column(column: pd.Series, mean, std) -> pd.Series:
     return filled_column
 
 
-"""
 def _fill_pm2_5(pm2_5_column: pd.Series, pm25_mean=np.log(15), pm25_sigma=0.8) -> None:
     # PM2.5 log-normal parameters (approximate)
-    pm25_mean = np.log(15)  # pm25_median = 15
-    pm25_sigma = 0.8
+    pm25_mean = pm25_mean  # pm25_median = 15
+    pm25_sigma = pm25_sigma
 
     none_values_mask = pm2_5_column.isna()
 
@@ -59,10 +60,10 @@ def _fill_pm2_5(pm2_5_column: pd.Series, pm25_mean=np.log(15), pm25_sigma=0.8) -
                                                              size=none_values_mask.sum()).round().astype(int)
 
 
-def _fill_no2(no2_column: pd.Series) -> None:
+def _fill_no2(no2_column: pd.Series, no2_mean=np.log(30), no2_sigma=0.7) -> None:
     # NO2 log-normal parameters (approximate)
-    no2_mean = np.log(30)  # no2_median = 30
-    no2_sigma = 0.7
+    no2_mean = no2_mean  # no2_median = 30
+    no2_sigma = no2_sigma
 
     none_values_mask = no2_column.isna()
 
@@ -70,26 +71,25 @@ def _fill_no2(no2_column: pd.Series) -> None:
                                                            size=none_values_mask.sum()).round().astype(int)
 
 
-def _fill_co2(co2_column: pd.Series) -> None:
+def _fill_co2(co2_column: pd.Series, co2_mean=420, co2_std=50) -> None:
     # CO2 normal parameters
-    co2_mean = 420
-    co2_std = 50
+    co2_mean = co2_mean
+    co2_std = co2_std
 
     none_values_mask = co2_column.isna()
     random_co2_values = np.random.normal(loc=co2_mean, scale=co2_std, size=none_values_mask.sum()).round().astype(int)
     random_co2_values = np.clip(random_co2_values, 350, None)
     co2_column.loc[none_values_mask] = random_co2_values
-"""
 
 
 def fill_weather_report_by_internet_data(report_df: pd.DataFrame) -> None:
-    report_df["PM2.5"] = _fill_lognormal_distribution_column(report_df["PM2.5"], PM25_MEDIAN, PM25_SIGMA)
-    report_df["NO2"] = _fill_lognormal_distribution_column(report_df["NO2"], NO2_MEDIAN, NO2_SIGMA)
-    report_df["CO2"] = _fill_normal_distribution_column(report_df["CO2"], CO2_MEAN, CO2_STD)
+    report_df["PM2.5"] = _fill_lognormal_distribution_column(report_df["PM2.5"], settings.PM25_MEDIAN, settings.PM25_SIGMA)
+    report_df["NO2"] = _fill_lognormal_distribution_column(report_df["NO2"], settings.NO2_MEDIAN, settings.NO2_SIGMA)
+    report_df["CO2"] = _fill_normal_distribution_column(report_df["CO2"], settings.CO2_MEAN, settings.CO2_STD)
 
 
 def _get_all_pollutants_data() -> PollutantsDataFrame:
-    directory_path = Path(DATA_PATH)  # Replace with your directory path
+    directory_path = Path(settings.DATA_PATH)  # Replace with your directory path
     air_quality_dfs = [pd.read_csv(file_path) for file_path in directory_path.iterdir() if file_path.suffix == ".csv"]
     all_air_quality_df = pd.concat(air_quality_dfs, ignore_index=True)
 
@@ -133,7 +133,7 @@ def fill_weather_report(report_df: pd.DataFrame, method="internet") -> None:
     if method == "internet":
         fill_weather_report_by_internet_data(report_df)
     else:
-        LOGGER.info("adding my data")
+        logger.info("adding my data")
         fill_weather_report_by_dataset_data(report_df)
 
 

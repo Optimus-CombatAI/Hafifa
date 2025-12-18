@@ -1,8 +1,8 @@
 from sqlalchemy import Table, Column, Integer, String
-from consts import META_DATA
+from db.database import metadata
 
 cities = Table(
-    'cities', META_DATA,
+    'cities', metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('name', String, unique=True),
+    Column('name', String, unique=True, nullable=False),
 )

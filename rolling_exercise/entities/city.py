@@ -1,14 +1,13 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 
-from consts import BASE
+from db.database import Base
 
 
-class City(BASE):
+class City(Base):
     __tablename__ = 'cities'
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
 
     reports = relationship("Report", back_populates="city")
-    alerts = relationship("Alert", back_populates="city")

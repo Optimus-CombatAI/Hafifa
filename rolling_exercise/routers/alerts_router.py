@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException
-from datetime import datetime
 
-from entities.alertReturnRow import AlertReturnRow
-import db.db_functions as db_funcs
-from utils.utils import is_valid_date
+from fastapi import APIRouter, HTTPException
+
+from exceptions.notValidDateException import NotValidDateException
+from exceptions.notExistingCityException import NotExistingCityException
+from models.alertReturnRow import AlertReturnRow
+import services.alerts_service as alerts_service
 
 router = APIRouter(
     prefix="/alerts",
@@ -17,32 +18,24 @@ async def get_all_alerts_handler() -> list[AlertReturnRow]:
     This function returns all the recorded alerts
     :return: all the recorded alerts
     """
-    alerts = await db_funcs.get_all_alerts()
-
-    if not alerts:
-        raise HTTPException(status_code=404, detail=f"No alerts found")
-
-    return alerts
+    return await alerts_service.get_all_alerts()
 
 
 @router.get("/since")
-async def get_alerts_by_date_handler(start_date: str) -> list[AlertReturnRow]:
+async def get_alerts_since_date_handler(start_date: str) -> list[AlertReturnRow]:
     """
     This function returns all the recorded alerts that happened during the day
     :param start_date: the date of the day to get the alerts from
     :return: recorded alerts that happened during the day
     """
-    if not is_valid_date(start_date):
-        raise HTTPException(status_code=422, detail="Dates not in format YYYY-MM-DD or not valid")
 
-    start_date = datetime.strptime(start_date, "%Y-%m-%d")
+    try:
+        alerts_since_start_date = await alerts_service.get_alerts_since_date(start_date)
 
-    alerts_from_start_date = await db_funcs.get_alerts_since_date(start_date)
+    except NotValidDateException as e:
+        raise HTTPException(status_code=400, detail=e.message)
 
-    if not alerts_from_start_date:
-        raise HTTPException(status_code=404, detail=f"No alerts found")
-
-    return alerts_from_start_date
+    return alerts_since_start_date
 
 
 @router.get("/by_city")
@@ -53,10 +46,10 @@ async def get_alerts_by_city_handler(city_name: str) -> list[AlertReturnRow]:
     :return: recorded alerts that happened in the city
     """
 
-    alerts_from_city = await db_funcs.get_alerts_from_city(city_name)
+    try:
+        alerts_from_city = await alerts_service.get_alerts_by_city(city_name)
 
-    if not alerts_from_city:
-        raise HTTPException(status_code=404, detail=f"No alerts found")
+    except NotExistingCityException as e:
+        raise HTTPException(status_code=404, detail=e.message)
 
     return alerts_from_city
-
