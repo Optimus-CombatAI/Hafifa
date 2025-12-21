@@ -12,7 +12,7 @@ from routers.aqi_statistics_router import router as aqi_statistics_router
 from routers.alerts_router import router as alerts_router
 from logger import LoggerConfig
 from settings import settings
-import connectors.db_connector as db_connector
+import tests.db_connector as db_connector
 
 
 @asynccontextmanager

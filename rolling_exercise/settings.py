@@ -1,13 +1,10 @@
-
-import os
-
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     USE_DUMMY_DATASET: bool = False
     USE_DATA_FILL: bool = True
-    DATA_PATH: str = os.getenv("DATA_PATH")
+    DATA_PATH: str = ""
     METHOD: str = "from_data"
 
     PM25_MEDIAN: int = 15
@@ -32,12 +29,10 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
 
     class Config:
-        env_prefix = "MYAPP_"
         env_file = ".env"
 
     @property
     def DB_URL(self) -> str:
-        # Use f-string to build the connection URL
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@localhost/{self.DB}"
 
 
