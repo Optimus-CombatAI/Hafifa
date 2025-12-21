@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Date, ForeignKey
 from sqlalchemy.orm import relationship
+import pandas as pd
 
 from db.database import Base
 
@@ -17,4 +18,3 @@ class Report(Base):
     aqi_level = Column(String)
 
     city = relationship("City", back_populates="reports")
-

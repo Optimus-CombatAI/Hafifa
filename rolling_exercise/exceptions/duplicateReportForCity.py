@@ -2,7 +2,7 @@
 from datetime import date
 
 
-class DuplicateDataException(Exception):
+class DuplicateReportForCity(Exception):
 
     def __init__(self, city_name: str, error_date: date):
         self.message = f"For the city {city_name} a report on {error_date} already exists!"

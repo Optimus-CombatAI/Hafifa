@@ -3,12 +3,11 @@ from fastapi import APIRouter, HTTPException, UploadFile, status
 from starlette.responses import Response
 
 from models.airQualityDataRow import AirQualityDataRow
-from exceptions.duplicateDataException import DuplicateDataException
+from exceptions.duplicateReportForCity import DuplicateReportForCity
 from exceptions.notFullDataFileException import NotFullDataFileException
 from exceptions.notValidDateException import NotValidDateException
 from exceptions.notExistingCityException import NotExistingCityException
-import services.air_quality_service as air_quality_controller
-
+from services import air_quality_service
 
 router = APIRouter(
     prefix="/air_quality",
@@ -25,9 +24,9 @@ async def upload_air_quality_handler(file: UploadFile) -> Response:
     """
 
     try:
-        await air_quality_controller.upload_air_quality(file)
+        await air_quality_service.upload_air_quality(file)
 
-    except (NotFullDataFileException, NotValidDateException, DuplicateDataException) as e:
+    except (NotFullDataFileException, NotValidDateException, DuplicateReportForCity) as e:
         raise HTTPException(status_code=400, detail=e.message)
 
     return Response(status_code=status.HTTP_201_CREATED)
@@ -43,7 +42,7 @@ async def get_air_quality_by_time_range_handler(start_date: str, end_date: str) 
     """
 
     try:
-        air_quality_data_rows = await air_quality_controller.get_air_quality_by_time_range(start_date, end_date)
+        air_quality_data_rows = await air_quality_service.get_air_quality_by_time_range(start_date, end_date)
 
     except NotValidDateException as e:
         raise HTTPException(status_code=400, detail=e.message)
@@ -60,7 +59,7 @@ async def get_air_quality_by_city_handler(city_name: str) -> list[AirQualityData
     """
 
     try:
-        air_quality_data_rows = await air_quality_controller.get_air_quality_by_city_name(city_name)
+        air_quality_data_rows = await air_quality_service.get_air_quality_by_city_name(city_name)
 
     except NotExistingCityException as e:
         raise HTTPException(status_code=404, detail=e.message)

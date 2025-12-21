@@ -1,9 +1,12 @@
 
 from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 import uvicorn
-from fastapi import FastAPI
+
 
 from db.database import db
+from exceptions.connectionException import ConnectionException
 from routers.air_quality_router import router as air_quality_router
 from routers.aqi_statistics_router import router as aqi_statistics_router
 from routers.alerts_router import router as alerts_router
@@ -31,6 +34,14 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+@app.exception_handler(ConnectionException)
+async def connection_exception_handler(request: Request, exc: ConnectionException,):
+    return JSONResponse(
+        status_code=503,
+        content={"detail": exc.message},
+    )
 
 
 app.include_router(air_quality_router)
