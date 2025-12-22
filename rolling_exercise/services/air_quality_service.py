@@ -7,7 +7,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-from db.database import db
+from db.database import Database
 from entities.city import City
 from entities.report import Report
 from sqlalchemy import select
@@ -16,12 +16,13 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.dml import Insert
 from sqlalchemy.sql import Select
 from exceptions.dbDuplicationError import DBDuplicationError
-from exceptions.duplicateReportForCityException import DuplicateReportForCity
+from exceptions.duplicateReportForCityException import DuplicateReportForCityException
 from exceptions.notFullDataFileException import NotFullDataFileException
 from exceptions.notExistingCityException import NotExistingCityException
 from exceptions.notValidDateException import NotValidDateException
 from models.airQualityDataRow import AirQualityDataRow
-from services import city_service
+from models.service import Service
+from services.city_service import CityService
 from settings import settings
 from utils import utils
 from utils.calculate_aqi import calculate_aqi
@@ -58,97 +59,6 @@ def _fill_aqi_data(report_data_df: pd.DataFrame) -> None:
                                                                                  report_data_df["CO2"])
 
 
-async def _insert_cities(city_names_df: pd.DataFrame) -> None:
-    city_names_df = city_names_df.rename(columns={"city": "name"})
-
-    stmt = insert(City).values(city_names_df.to_dict(orient="records"))
-    stmt = stmt.on_conflict_do_nothing(index_elements=["name"])
-
-    await db.execute_with_no_results(stmt)
-
-    logger.info(f"cities_inserted: {len(city_names_df)}")
-
-
-async def _get_cities_to_id_map() -> Dict[str, str]:
-    result = await db.execute_with_plain_results(select(City.id, City.name))
-    existing_cities = result.mappings().all()
-    existing_map = {row["name"]: row["id"] for row in existing_cities}
-
-    return existing_map
-
-
-async def _create_report_from_row(report_row: pd.Series) -> Dict[str, Any]:
-
-    city_name_to_id_map = await _get_cities_to_id_map()
-    city_id = int(city_name_to_id_map.get(report_row["name"]))
-
-    report = {
-        "date": datetime.strptime(report_row["date"], settings.DATE_FORMAT),
-        "city_id": city_id,
-        "pm2_5": int(report_row["PM2.5"]),
-        "no2": int(report_row["NO2"]),
-        "co2": int(report_row["CO2"]),
-        "overall_aqi": int(report_row["overall_aqi"]),
-        "aqi_level": report_row["aqi_level"]
-    }
-
-    return report
-
-
-async def _get_reports_statements(reports_df: pd.DataFrame) -> Insert:
-    reports_to_insert = []
-
-    for _, row in reports_df.iterrows():
-        reports_to_insert.append(await _create_report_from_row(row))
-
-    stmt = insert(Report).values(reports_to_insert)
-
-    return stmt
-
-
-async def _extract_city_name_and_date(error_message: str) -> tuple[str, datetime.date]:
-
-    pattern = r"\((\d{4}-\d{2}-\d{2}),\s*(\d+)\)"
-    match = re.search(pattern, error_message)
-
-    date = datetime.strptime(match.group(1), settings.DATE_FORMAT).date()
-    city_id = int(match.group(2))
-
-    name_to_id_map = await _get_cities_to_id_map()
-    city_name = next((k for k, v in name_to_id_map.items() if v == city_id), None)
-
-    return city_name, date
-
-
-async def _insert_reports(reports_df: pd.DataFrame) -> None:
-
-    logger.info(reports_df)
-
-    reports_stmts = await _get_reports_statements(reports_df)
-
-    try:
-        await db.execute_with_no_results(reports_stmts)
-
-    except DBDuplicationError as e:
-        city_name, date = await _extract_city_name_and_date(e.message)
-        raise DuplicateReportForCity(city_name, date)
-
-    logger.info(f"reports_inserted: {len(reports_df)}")
-
-
-async def upload_air_quality(file: UploadFile) -> None:
-    data_df = pd.read_csv(file.file)
-
-    _validate_file_correctness(data_df)
-
-    city_names_df = data_df[["city"]].drop_duplicates()
-    await _insert_cities(city_names_df)
-
-    report_data_df = data_df[["date", "city", "PM2.5", "NO2", "CO2"]].rename(columns={"city": "name"})
-    _fill_aqi_data(report_data_df)
-    await _insert_reports(report_data_df)
-
-
 def _get_air_quality_time_range_stmt(start_date: datetime.date, end_date: datetime.date) -> Select:
     stmt = (
         select(Report)
@@ -177,24 +87,112 @@ def _get_air_quality_data_rows(reports_results: List[Report]) -> List[AirQuality
     return [AirQualityDataRow.from_report(report) for report in reports_results]
 
 
-async def get_air_quality_by_time_range(start_date: str, end_date: str) -> List[AirQualityDataRow]:
-    if not utils.is_valid_date(start_date) or not utils.is_valid_date(end_date):
-        raise NotValidDateException
+class AirQualityService(Service):
+    def __init__(self, db: Database):
+        super().__init__(db)
+        self.city_service = CityService(db)
 
-    start_date = datetime.strptime(start_date, settings.DATE_FORMAT)
-    end_date = datetime.strptime(end_date, settings.DATE_FORMAT)
+    async def _get_reports_statements(self, reports_df: pd.DataFrame) -> Insert:
+        reports_to_insert = []
 
-    reports_results = await db.execute_with_scalar_results(_get_air_quality_time_range_stmt(start_date, end_date))
-    data_rows = _get_air_quality_data_rows(reports_results)
+        for _, row in reports_df.iterrows():
+            reports_to_insert.append(await self._create_report_from_row(row))
 
-    return data_rows
+        stmt = insert(Report).values(reports_to_insert)
 
+        return stmt
 
-async def get_air_quality_by_city_name(city_name: str) -> List[AirQualityDataRow]:
-    if not await city_service.is_existing_city(city_name):
-        raise NotExistingCityException
+    async def _create_report_from_row(self, report_row: pd.Series) -> Dict[str, Any]:
 
-    reports_results = await db.execute_with_scalar_results(_get_air_quality_city_stmt(city_name))
-    data_rows = _get_air_quality_data_rows(reports_results)
+        city_name_to_id_map = await self._get_cities_to_id_map()
+        city_id = int(city_name_to_id_map.get(report_row["name"]))
 
-    return data_rows
+        report = {
+            "date": datetime.strptime(report_row["date"], settings.DATE_FORMAT),
+            "city_id": city_id,
+            "pm2_5": int(report_row["PM2.5"]),
+            "no2": int(report_row["NO2"]),
+            "co2": int(report_row["CO2"]),
+            "overall_aqi": int(report_row["overall_aqi"]),
+            "aqi_level": report_row["aqi_level"]
+        }
+
+        return report
+
+    async def _extract_city_name_and_date(self, error_message: str) -> tuple[str, datetime.date]:
+
+        pattern = r"\((\d{4}-\d{2}-\d{2}),\s*(\d+)\)"
+        match = re.search(pattern, error_message)
+
+        date = datetime.strptime(match.group(1), settings.DATE_FORMAT).date()
+        city_id = int(match.group(2))
+
+        name_to_id_map = await self._get_cities_to_id_map()
+        city_name = next((k for k, v in name_to_id_map.items() if v == city_id), None)
+
+        return city_name, date
+
+    async def _insert_cities(self, city_names_df: pd.DataFrame) -> None:
+        city_names_df = city_names_df.rename(columns={"city": "name"})
+
+        stmt = insert(City).values(city_names_df.to_dict(orient="records"))
+        stmt = stmt.on_conflict_do_nothing(index_elements=["name"])
+
+        await self.db.execute_with_no_results(stmt)
+
+        logger.info(f"cities_inserted: {len(city_names_df)}")
+
+    async def _get_cities_to_id_map(self) -> Dict[str, str]:
+        result = await self.db.execute_with_plain_results(select(City.id, City.name))
+        existing_cities = result.mappings().all()
+        existing_map = {row["name"]: row["id"] for row in existing_cities}
+
+        return existing_map
+
+    async def _insert_reports(self, reports_df: pd.DataFrame) -> None:
+
+        logger.info(reports_df)
+
+        reports_stmts = await self._get_reports_statements(reports_df)
+
+        try:
+            await self.db.execute_with_no_results(reports_stmts)
+
+        except DBDuplicationError as e:
+            city_name, date = await self._extract_city_name_and_date(e.message)
+            raise DuplicateReportForCityException(city_name, date)
+
+        logger.info(f"reports_inserted: {len(reports_df)}")
+
+    async def upload_air_quality(self, file: UploadFile) -> None:
+        data_df = pd.read_csv(file.file)
+
+        _validate_file_correctness(data_df)
+
+        city_names_df = data_df[["city"]].drop_duplicates()
+        await self._insert_cities(city_names_df)
+
+        report_data_df = data_df[["date", "city", "PM2.5", "NO2", "CO2"]].rename(columns={"city": "name"})
+        _fill_aqi_data(report_data_df)
+        await self._insert_reports(report_data_df)
+
+    async def get_air_quality_by_time_range(self, start_date: str, end_date: str) -> List[AirQualityDataRow]:
+        if not utils.is_valid_date(start_date) or not utils.is_valid_date(end_date):
+            raise NotValidDateException
+
+        start_date = datetime.strptime(start_date, settings.DATE_FORMAT)
+        end_date = datetime.strptime(end_date, settings.DATE_FORMAT)
+
+        reports_results = await self.db.execute_with_scalar_results(_get_air_quality_time_range_stmt(start_date, end_date))
+        data_rows = _get_air_quality_data_rows(reports_results)
+
+        return data_rows
+
+    async def get_air_quality_by_city_name(self, city_name: str) -> List[AirQualityDataRow]:
+        if not await self.city_service.is_existing_city(city_name):
+            raise NotExistingCityException
+
+        reports_results = await self.db.execute_with_scalar_results(_get_air_quality_city_stmt(city_name))
+        data_rows = _get_air_quality_data_rows(reports_results)
+
+        return data_rows

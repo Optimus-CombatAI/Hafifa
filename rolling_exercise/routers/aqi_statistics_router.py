@@ -1,54 +1,55 @@
 from fastapi import APIRouter, HTTPException
 
+from db.database import Database
 from exceptions.notExistingCityException import NotExistingCityException
 from models.AQIDataRow import AQIDataRow
-import services.aqi_statistics_service as aqi_statistics_service
-
-router = APIRouter(
-    prefix="/aqi_statistics",
-    tags=["AQI Statistics"]
-)
+# import services.aqi_statistics_service as aqi_statistics_service
+from models.appRouter import AppRouter
+from services.aqi_statistics_service import AQIStatisticsService
 
 
-@router.get("/history")
-async def get_aqi_history_by_city_handler(city_name: str) -> list[AQIDataRow]:
-    """
-    This function return the aqi history of a given city
-    :param city_name: the name of the city to get history of aqi
-    :return: aqi history of the given city
-    """
+class AQIStatisticsRouter(AppRouter):
+    def __init__(self, db: Database):
+        super().__init__("/aqi_statistics", ["AQI Statistics"], db, AQIStatisticsService)
 
-    try:
-        aqi_city_history = await aqi_statistics_service.get_aqi_history_by_city(city_name)
+        self.add_api_route("/history", self.get_aqi_history_by_city_handler, methods=["GET"])
+        self.add_api_route("/average", self.get_avg_aqi_by_city_handler, methods=["GET"])
+        self.add_api_route("/best_cities", self.get_aqi_best_cities_handler, methods=["GET"])
 
-    except NotExistingCityException as e:
-        raise HTTPException(status_code=404, detail=e.message)
+    async def get_aqi_history_by_city_handler(self, city_name: str) -> list[AQIDataRow]:
+        """
+        This function return the aqi history of a given city
+        :param city_name: the name of the city to get history of aqi
+        :return: aqi history of the given city
+        """
 
-    return aqi_city_history
+        try:
+            aqi_city_history = await self.service.get_aqi_history_by_city(city_name)
 
+        except NotExistingCityException as e:
+            raise HTTPException(status_code=404, detail=e.message)
 
-@router.get("/average")
-async def get_avg_aqi_by_city_handler(city_name: str) -> AQIDataRow:
-    """
-    This function returns the average aqi score for a given city
-    :param city_name: the name of the city to calculate the average aqi
-    :return: the average aqi score
-    """
+        return aqi_city_history
 
-    try:
-        aqi_city_avg = await aqi_statistics_service.get_aqi_avg_by_city(city_name)
+    async def get_avg_aqi_by_city_handler(self, city_name: str) -> AQIDataRow:
+        """
+        This function returns the average aqi score for a given city
+        :param city_name: the name of the city to calculate the average aqi
+        :return: the average aqi score
+        """
 
-    except NotExistingCityException as e:
-        raise HTTPException(status_code=404, detail=e.message)
+        try:
+            aqi_city_avg = await self.service.get_aqi_avg_by_city(city_name)
 
-    return aqi_city_avg
+        except NotExistingCityException as e:
+            raise HTTPException(status_code=404, detail=e.message)
 
+        return aqi_city_avg
 
-@router.get("/best_cities")
-async def get_aqi_best_cities_handler() -> list[str]:
-    """
-    This function returns 3 cities with the best aqi score(the lowest score)
-    :return: 3 cities with lowest aqi
-    """
+    async def get_aqi_best_cities_handler(self) -> list[str]:
+        """
+        This function returns 3 cities with the best aqi score(the lowest score)
+        :return: 3 cities with lowest aqi
+        """
 
-    return await aqi_statistics_service.get_3_best_cities()
+        return await self.service.get_3_best_cities()

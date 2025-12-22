@@ -25,6 +25,7 @@ class Settings(BaseSettings):
 
     DB: str = "prepSQL"
     SCHEME: str = "rolling_exercise"
+    MOCK_SCHEME: str = "mock_rolling_exercise"
 
     DB_USER: str
     DB_PASSWORD: str

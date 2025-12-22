@@ -5,10 +5,11 @@ import random
 import logging
 from sqlalchemy.dialects.postgresql import insert
 
-from db.database import db
+# from db.database import db
 from db.cities_table import cities
+from db.database import Database
 from db.reports_table import reports
-
+from settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,8 @@ async def fill_dummy_data(use_dummy_dataset=False) -> None:
                                        co2=random.randint(1, 10),
                                        overall_aqi=random.randint(1, 10), aqi_level=random.choice(levels))
             )
+
+        db = Database(settings.DB_URL)
 
         async with db.engine.begin() as conn:
             for stmt in city_stmt:

@@ -1,55 +1,55 @@
 
-from fastapi import APIRouter, HTTPException
+from fastapi import HTTPException
 
+from db.database import Database
 from exceptions.notValidDateException import NotValidDateException
 from exceptions.notExistingCityException import NotExistingCityException
 from models.alertReturnRow import AlertReturnRow
-import services.alerts_service as alerts_service
-
-router = APIRouter(
-    prefix="/alerts",
-    tags=["Alerts"]
-)
+from models.appRouter import AppRouter
+from services.alerts_service import AlertsService
 
 
-@router.get("/")
-async def get_all_alerts_handler() -> list[AlertReturnRow]:
-    """
-    This function returns all the recorded alerts
-    :return: all the recorded alerts
-    """
-    return await alerts_service.get_all_alerts()
+class AlertsRouter(AppRouter):
+    def __init__(self, db: Database):
+        super().__init__("/alerts", ["Alerts"], db, AlertsService)
 
+        self.add_api_route("/", self.get_all_alerts_handler, methods=["GET"])
+        self.add_api_route("/since", self.get_alerts_since_date_handler, methods=["GET"])
+        self.add_api_route("/by_city", self.get_alerts_by_city_handler, methods=["GET"])
 
-@router.get("/since")
-async def get_alerts_since_date_handler(start_date: str) -> list[AlertReturnRow]:
-    """
-    This function returns all the recorded alerts that happened during the day
-    :param start_date: the date of the day to get the alerts from
-    :return: recorded alerts that happened during the day
-    """
+    async def get_all_alerts_handler(self) -> list[AlertReturnRow]:
+        """
+        This function returns all the recorded alerts
+        :return: all the recorded alerts
+        """
+        return await self.service.get_all_alerts()
 
-    try:
-        alerts_since_start_date = await alerts_service.get_alerts_since_date(start_date)
+    async def get_alerts_since_date_handler(self, start_date: str) -> list[AlertReturnRow]:
+        """
+        This function returns all the recorded alerts that happened during the day
+        :param start_date: the date of the day to get the alerts from
+        :return: recorded alerts that happened during the day
+        """
 
-    except NotValidDateException as e:
-        raise HTTPException(status_code=400, detail=e.message)
+        try:
+            alerts_since_start_date = await self.service.get_alerts_since_date(start_date)
 
-    return alerts_since_start_date
+            return alerts_since_start_date
 
+        except NotValidDateException as e:
+            raise HTTPException(status_code=400, detail=e.message)
 
-@router.get("/by_city")
-async def get_alerts_by_city_handler(city_name: str) -> list[AlertReturnRow]:
-    """
-    This function returns all the recorded alerts that happened in the city
-    :param city_name: the name of the city to get the alerts from
-    :return: recorded alerts that happened in the city
-    """
+    async def get_alerts_by_city_handler(self, city_name: str) -> list[AlertReturnRow]:
+        """
+        This function returns all the recorded alerts that happened in the city
+        :param city_name: the name of the city to get the alerts from
+        :return: recorded alerts that happened in the city
+        """
 
-    try:
-        alerts_from_city = await alerts_service.get_alerts_by_city(city_name)
+        try:
+            alerts_from_city = await self.service.get_alerts_by_city(city_name)
 
-    except NotExistingCityException as e:
-        raise HTTPException(status_code=404, detail=e.message)
+            return alerts_from_city
 
-    return alerts_from_city
+        except NotExistingCityException as e:
+            raise HTTPException(status_code=404, detail=e.message)

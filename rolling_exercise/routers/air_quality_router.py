@@ -1,66 +1,65 @@
 
-from fastapi import APIRouter, HTTPException, UploadFile, status
+from fastapi import HTTPException, UploadFile, status
 from starlette.responses import Response
 
+from db.database import Database
 from models.airQualityDataRow import AirQualityDataRow
 from exceptions.notValidDateException import NotValidDateException
 from exceptions.notExistingCityException import NotExistingCityException
 from exceptions.dbIntegrityException import DBIntegrityException
-from services import air_quality_service
-
-router = APIRouter(
-    prefix="/air_quality",
-    tags=["Air Quality"]
-)
+from models.appRouter import AppRouter
+from services.air_quality_service import AirQualityService
 
 
-@router.post("/upload")
-async def upload_air_quality_handler(file: UploadFile) -> Response:
-    """
-    This function adds to the database the weather data it receives and alerts if there are
-    :param file: a multipart/form-data request containing a CSV file.
-    :return: a response if created successfully
-    """
+class AirQualityRouter(AppRouter):
+    def __init__(self, db: Database):
+        super().__init__("/air_quality", ["Air Quality"], db, AirQualityService)
 
-    try:
-        await air_quality_service.upload_air_quality(file)
+        self.add_api_route("/upload", self.upload_air_quality_handler, methods=["POST"])
+        self.add_api_route("/by_time", self.get_air_quality_by_time_range_handler, methods=["GET"])
+        self.add_api_route("/by_city", self.get_air_quality_by_city_handler, methods=["GET"])
 
-    except DBIntegrityException as e:
-        raise HTTPException(status_code=400, detail=e.message)
+    async def upload_air_quality_handler(self, file: UploadFile) -> Response:
+        """
+        This function adds to the database the weather data it receives and alerts if there are
+        :param file: a multipart/form-data request containing a CSV file.
+        :return: a response if created successfully
+        """
 
-    return Response(status_code=status.HTTP_201_CREATED)
+        try:
+            await self.service.upload_air_quality(file)
 
+            return Response(status_code=status.HTTP_201_CREATED)
 
-@router.get("/by_time")
-async def get_air_quality_by_time_range_handler(start_date: str, end_date: str) -> list[AirQualityDataRow]:
-    """
-    This function gets the weather data within a range for all the cities
-    :param start_date: initial date of the range
-    :param end_date: final date of the range
-    :return: the weather within the range for all the cities
-    """
+        except DBIntegrityException as e:
+            raise HTTPException(status_code=400, detail=e.message)
 
-    try:
-        air_quality_data_rows = await air_quality_service.get_air_quality_by_time_range(start_date, end_date)
+    async def get_air_quality_by_time_range_handler(self, start_date: str, end_date: str) -> list[AirQualityDataRow]:
+        """
+        This function gets the weather data within a range for all the cities
+        :param start_date: initial date of the range
+        :param end_date: final date of the range
+        :return: the weather within the range for all the cities
+        """
 
-    except NotValidDateException as e:
-        raise HTTPException(status_code=400, detail=e.message)
+        try:
+            air_quality_data_rows = await self.service.get_air_quality_by_time_range(start_date, end_date)
 
-    return air_quality_data_rows
+            return air_quality_data_rows
 
+        except NotValidDateException as e:
+            raise HTTPException(status_code=400, detail=e.message)
 
-@router.get("/by_city")
-async def get_air_quality_by_city_handler(city_name: str) -> list[AirQualityDataRow]:
-    """
-    This function gets all the weather data for a given city
-    :param city_name: the name of the city to get the weather from
-    :return: all the weather in the city
-    """
+    async def get_air_quality_by_city_handler(self, city_name: str) -> list[AirQualityDataRow]:
+        """
+        This function gets all the weather data for a given city
+        :param city_name: the name of the city to get the weather from
+        :return: all the weather in the city
+        """
 
-    try:
-        air_quality_data_rows = await air_quality_service.get_air_quality_by_city_name(city_name)
+        try:
+            air_quality_data_rows = await self.service.get_air_quality_by_city_name(city_name)
+            return air_quality_data_rows
 
-    except NotExistingCityException as e:
-        raise HTTPException(status_code=404, detail=e.message)
-
-    return air_quality_data_rows
+        except NotExistingCityException as e:
+            raise HTTPException(status_code=404, detail=e.message)

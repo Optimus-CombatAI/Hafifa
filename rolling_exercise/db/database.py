@@ -3,12 +3,11 @@ import logging
 from typing import List
 
 from contextlib import asynccontextmanager
-from sqlalchemy import MetaData, text
+from sqlalchemy import MetaData, text, Executable
 from sqlalchemy.exc import OperationalError, IntegrityError
 from asyncpg.exceptions import PostgresConnectionError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.sql import Select
 
 from exceptions.connectionException import ConnectionException
 from exceptions.dbDuplicationError import DBDuplicationError
@@ -31,10 +30,10 @@ def _handle_integrity_error(error: IntegrityError):
 
 
 class Database:
-    def __init__(self, db_url: str):
+    def __init__(self, db_url: str, scheme: str):
         self.engine = create_async_engine(
             db_url,
-            connect_args={"server_settings": {"search_path": settings.SCHEME}},
+            connect_args={"server_settings": {"search_path": scheme}},
             pool_pre_ping=True,
             pool_recycle=1800,
             echo=False,
@@ -51,7 +50,7 @@ class Database:
         self.delay = settings.DEFAULT_DELAY
 
     async def create_tables(self) -> None:
-        async with self.engine.begin() as conn:  # async connection context
+        async with self.engine.begin() as conn:
             await conn.run_sync(self.metadata.create_all)
 
     async def reset_tables(self, drop_previous: bool = False):
@@ -84,18 +83,15 @@ class Database:
             finally:
                 logger.info("session closed")
 
-    async def execute_with_scalar_results(self, stmt: Select) -> List:
+    async def execute_with_scalar_results(self, stmt: Executable) -> List:
         async with self.session() as session:
             result = await session.scalars(stmt)
             return result.all()
 
-    async def execute_with_no_results(self, stmt: Select) -> None:
+    async def execute_with_no_results(self, stmt: Executable) -> None:
         async with self.session() as session:
             await session.execute(stmt)
 
-    async def execute_with_plain_results(self, stmt: Select) -> List:
+    async def execute_with_plain_results(self, stmt: Executable) -> List:
         async with self.session() as session:
             return await session.execute(stmt)
-
-
-db = Database(settings.DB_URL)
