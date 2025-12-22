@@ -15,9 +15,7 @@ from settings import settings
 import tests.db_connector as db_connector
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # -------- startup --------
+async def _on_startup() -> None:
     LoggerConfig()
 
     await db.reset_tables(drop_previous=settings.DELETE_PREV_TABLES)
@@ -26,18 +24,19 @@ async def lifespan(app: FastAPI):
         use_dummy_dataset=settings.USE_DUMMY_DATASET
     )
 
-    yield
 
-    # -------- shutdown --------
-    # (put cleanup here if needed)
-    # e.g. await db.close()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await _on_startup()
+
+    yield
 
 
 app = FastAPI(lifespan=lifespan)
 
 
 @app.exception_handler(ConnectionException)
-async def connection_exception_handler(request: Request, exc: ConnectionException,):
+async def connection_exception_handler(request: Request, exc: ConnectionException,) -> JSONResponse:
     return JSONResponse(
         status_code=503,
         content={"detail": exc.message},

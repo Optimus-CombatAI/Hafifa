@@ -16,11 +16,11 @@ def is_valid_date(date: str) -> bool:
     try:
         pattern = r"^\d{4}-\d{2}-\d{2}$"
         is_matching_pattern = bool(re.match(pattern, date))
-        datetime.strptime(date, "%Y-%m-%d")
+        datetime.strptime(date, settings.DATE_FORMAT)
 
         return is_matching_pattern
 
-    except ValueError:
+    except ValueError as e:
         return False
 
 

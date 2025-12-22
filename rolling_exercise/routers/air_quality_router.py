@@ -3,10 +3,9 @@ from fastapi import APIRouter, HTTPException, UploadFile, status
 from starlette.responses import Response
 
 from models.airQualityDataRow import AirQualityDataRow
-from exceptions.duplicateReportForCity import DuplicateReportForCity
-from exceptions.notFullDataFileException import NotFullDataFileException
 from exceptions.notValidDateException import NotValidDateException
 from exceptions.notExistingCityException import NotExistingCityException
+from exceptions.dbIntegrityException import DBIntegrityException
 from services import air_quality_service
 
 router = APIRouter(
@@ -26,7 +25,7 @@ async def upload_air_quality_handler(file: UploadFile) -> Response:
     try:
         await air_quality_service.upload_air_quality(file)
 
-    except (NotFullDataFileException, NotValidDateException, DuplicateReportForCity) as e:
+    except DBIntegrityException as e:
         raise HTTPException(status_code=400, detail=e.message)
 
     return Response(status_code=status.HTTP_201_CREATED)

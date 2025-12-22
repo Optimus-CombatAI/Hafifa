@@ -2,9 +2,10 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    DATE_FORMAT: str = "%Y-%m-%d"
+
     USE_DUMMY_DATASET: bool = False
     USE_DATA_FILL: bool = True
-    DATA_PATH: str = ""
     METHOD: str = "from_data"
 
     PM25_MEDIAN: int = 15
@@ -27,6 +28,7 @@ class Settings(BaseSettings):
 
     DB_USER: str
     DB_PASSWORD: str
+    DATA_PATH: str
 
     class Config:
         env_file = ".env"

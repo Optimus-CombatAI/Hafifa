@@ -16,7 +16,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.dml import Insert
 from sqlalchemy.sql import Select
 from exceptions.dbDuplicationError import DBDuplicationError
-from exceptions.duplicateReportForCity import DuplicateReportForCity
+from exceptions.duplicateReportForCityException import DuplicateReportForCity
 from exceptions.notFullDataFileException import NotFullDataFileException
 from exceptions.notExistingCityException import NotExistingCityException
 from exceptions.notValidDateException import NotValidDateException
@@ -83,7 +83,7 @@ async def _create_report_from_row(report_row: pd.Series) -> Dict[str, Any]:
     city_id = int(city_name_to_id_map.get(report_row["name"]))
 
     report = {
-        "date": datetime.strptime(report_row["date"], "%Y-%m-%d"),
+        "date": datetime.strptime(report_row["date"], settings.DATE_FORMAT),
         "city_id": city_id,
         "pm2_5": int(report_row["PM2.5"]),
         "no2": int(report_row["NO2"]),
@@ -111,14 +111,13 @@ async def _extract_city_name_and_date(error_message: str) -> tuple[str, datetime
     pattern = r"\((\d{4}-\d{2}-\d{2}),\s*(\d+)\)"
     match = re.search(pattern, error_message)
 
-    if match:
-        date = datetime.strptime(match.group(1), '%Y-%m-%d').date()
-        city_id = int(match.group(2))
+    date = datetime.strptime(match.group(1), settings.DATE_FORMAT).date()
+    city_id = int(match.group(2))
 
-        name_to_id_map = await _get_cities_to_id_map()
-        city_name = next((k for k, v in name_to_id_map.items() if v == city_id), None)
+    name_to_id_map = await _get_cities_to_id_map()
+    city_name = next((k for k, v in name_to_id_map.items() if v == city_id), None)
 
-        return city_name, date
+    return city_name, date
 
 
 async def _insert_reports(reports_df: pd.DataFrame) -> None:
@@ -126,6 +125,7 @@ async def _insert_reports(reports_df: pd.DataFrame) -> None:
     logger.info(reports_df)
 
     reports_stmts = await _get_reports_statements(reports_df)
+
     try:
         await db.execute_with_no_results(reports_stmts)
 
@@ -181,7 +181,8 @@ async def get_air_quality_by_time_range(start_date: str, end_date: str) -> List[
     if not utils.is_valid_date(start_date) or not utils.is_valid_date(end_date):
         raise NotValidDateException
 
-    start_date, end_date = datetime.strptime(start_date, "%Y-%m-%d"), datetime.strptime(end_date, "%Y-%m-%d")
+    start_date = datetime.strptime(start_date, settings.DATE_FORMAT)
+    end_date = datetime.strptime(end_date, settings.DATE_FORMAT)
 
     reports_results = await db.execute_with_scalar_results(_get_air_quality_time_range_stmt(start_date, end_date))
     data_rows = _get_air_quality_data_rows(reports_results)

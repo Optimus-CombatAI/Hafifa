@@ -10,6 +10,7 @@ from exceptions.notExistingCityException import NotExistingCityException
 from exceptions.notValidDateException import NotValidDateException
 from models.alertReturnRow import AlertReturnRow
 from services import city_service
+from settings import settings
 from utils.utils import is_valid_date
 
 
@@ -68,7 +69,7 @@ async def get_alerts_since_date(start_date: str) -> List[AlertReturnRow]:
     if not is_valid_date(start_date):
         raise NotValidDateException
 
-    start_date = datetime.strptime(start_date, "%Y-%m-%d")
+    start_date = datetime.strptime(start_date, settings.DATE_FORMAT)
 
     stmt = _get_alerts_since_date_stmt(start_date)
     alerts_results = await db.execute_with_plain_results(stmt)
