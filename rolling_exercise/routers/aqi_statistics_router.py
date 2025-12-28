@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from starlette import status
 
 from db.database import Database
 from exceptions.notExistingCityException import NotExistingCityException
@@ -26,10 +27,10 @@ class AQIStatisticsRouter(AppRouter):
         try:
             aqi_city_history = await self.service.get_aqi_history_by_city(city_name)
 
-        except NotExistingCityException as e:
-            raise HTTPException(status_code=404, detail=e.message)
+            return aqi_city_history
 
-        return aqi_city_history
+        except NotExistingCityException as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
 
     async def get_avg_aqi_by_city_handler(self, city_name: str) -> AQIDataRow:
         """
@@ -41,10 +42,10 @@ class AQIStatisticsRouter(AppRouter):
         try:
             aqi_city_avg = await self.service.get_aqi_avg_by_city(city_name)
 
-        except NotExistingCityException as e:
-            raise HTTPException(status_code=404, detail=e.message)
+            return aqi_city_avg
 
-        return aqi_city_avg
+        except NotExistingCityException as e:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
 
     async def get_aqi_best_cities_handler(self) -> list[str]:
         """

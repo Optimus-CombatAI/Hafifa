@@ -12,7 +12,7 @@ from models.alertReturnRow import AlertReturnRow
 from models.service import Service
 from services.city_service import CityService
 from settings import settings
-from utils.utils import is_valid_date
+from utils.serviceUtils import is_valid_date
 
 
 def _get_all_alert_stmt() -> Select:

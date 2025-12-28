@@ -24,7 +24,8 @@ from models.airQualityDataRow import AirQualityDataRow
 from models.service import Service
 from services.city_service import CityService
 from settings import settings
-from utils import utils
+from utils.serviceUtils import is_valid_date
+from utils.testUtils import _fill_weather_report
 from utils.calculate_aqi import calculate_aqi
 
 logger = logging.getLogger(__name__)
@@ -33,7 +34,7 @@ logger = logging.getLogger(__name__)
 def _validate_fullness(data_df: pd.DataFrame) -> None:
     if settings.USE_DATA_FILL:
         logger.info("used auto fill")
-        utils.fill_weather_report(data_df, settings.METHOD)
+        _fill_weather_report(data_df, settings.METHOD)
 
     else:
         if data_df.isnull().values.any():
@@ -41,7 +42,7 @@ def _validate_fullness(data_df: pd.DataFrame) -> None:
 
 
 def _validate_date_column(dates_column: pd.Series) -> None:
-    check_column_dates = np.vectorize(utils.is_valid_date)
+    check_column_dates = np.vectorize(is_valid_date)
 
     if not check_column_dates(dates_column).all():
         raise NotValidDateException
@@ -177,7 +178,7 @@ class AirQualityService(Service):
         await self._insert_reports(report_data_df)
 
     async def get_air_quality_by_time_range(self, start_date: str, end_date: str) -> List[AirQualityDataRow]:
-        if not utils.is_valid_date(start_date) or not utils.is_valid_date(end_date):
+        if not is_valid_date(start_date) or not is_valid_date(end_date):
             raise NotValidDateException
 
         start_date = datetime.strptime(start_date, settings.DATE_FORMAT)

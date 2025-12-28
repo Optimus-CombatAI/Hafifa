@@ -12,23 +12,18 @@ from routers.aqi_statistics_router import AQIStatisticsRouter
 from routers.alerts_router import AlertsRouter
 from logger import LoggerConfig
 from settings import settings
-import tests.db_connector as db_connector
 
 
-async def _on_startup(app_db) -> None:
+async def _on_startup(app_db: Database, to_reset: bool = False) -> None:
     LoggerConfig()
-
-    await app_db.reset_tables(drop_previous=settings.DELETE_PREV_TABLES)
     await app_db.create_tables()
-    await db_connector.fill_dummy_data(
-        use_dummy_dataset=settings.USE_DUMMY_DATASET
-    )
+    await db.reset_tables(to_reset)
 
 
 def create_lifespan(app_db: Database):
     @asynccontextmanager
     async def lifespan(fast_api_app: FastAPI):
-        await _on_startup(app_db)
+        await _on_startup(app_db, True)
         yield
 
     return lifespan

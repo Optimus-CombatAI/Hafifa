@@ -3,10 +3,10 @@ import logging
 from typing import List
 
 from contextlib import asynccontextmanager
-from sqlalchemy import MetaData, text, Executable
+from sqlalchemy import MetaData, text, Executable, NullPool
 from sqlalchemy.exc import OperationalError, IntegrityError
 from asyncpg.exceptions import PostgresConnectionError
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker, AsyncEngine
 from sqlalchemy.orm import declarative_base
 
 from exceptions.connectionException import ConnectionException
@@ -14,8 +14,6 @@ from exceptions.dbDuplicationError import DBDuplicationError
 from settings import settings
 
 Base = declarative_base()
-metadata = MetaData()
-
 logger = logging.getLogger(__name__)
 
 
@@ -38,7 +36,8 @@ class Database:
             pool_recycle=1800,
             echo=False,
         )
-        self.metadata = metadata
+
+        self.metadata = MetaData()
 
         self._session_factory = async_sessionmaker(
             bind=self.engine,
@@ -49,17 +48,25 @@ class Database:
         self.retries = settings.DEFAULT_RETRIES
         self.delay = settings.DEFAULT_DELAY
 
+        self._define_tables()
+
+    def _define_tables(self):
+        from db.cities_table import _define_cities_table
+        from db.reports_table import _define_reports_table
+
+        _define_cities_table(self)
+        _define_reports_table(self)
+
     async def create_tables(self) -> None:
         async with self.engine.begin() as conn:
             await conn.run_sync(self.metadata.create_all)
 
     async def reset_tables(self, drop_previous: bool = False):
-        if drop_previous:
-            async with self.engine.begin() as conn:
-                for table in reversed(self.metadata.sorted_tables):
-                    await conn.execute(text(f'DROP TABLE IF EXISTS "{table.name}" CASCADE;'))
+        async with self.engine.begin() as conn:
+            if drop_previous:
+                await conn.run_sync(Base.metadata.drop_all)
 
-            await self.engine.run_sync(self.metadata.create_all)
+            await conn.run_sync(self.metadata.create_all)
 
     @asynccontextmanager
     async def session(self):

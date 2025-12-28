@@ -1,5 +1,6 @@
 
 from fastapi import HTTPException
+from starlette import status
 
 from db.database import Database
 from exceptions.notValidDateException import NotValidDateException
@@ -37,7 +38,7 @@ class AlertsRouter(AppRouter):
             return alerts_since_start_date
 
         except NotValidDateException as e:
-            raise HTTPException(status_code=400, detail=e.message)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
     async def get_alerts_by_city_handler(self, city_name: str) -> list[AlertReturnRow]:
         """
@@ -52,4 +53,4 @@ class AlertsRouter(AppRouter):
             return alerts_from_city
 
         except NotExistingCityException as e:
-            raise HTTPException(status_code=404, detail=e.message)
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)

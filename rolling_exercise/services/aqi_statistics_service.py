@@ -9,7 +9,7 @@ from models.AQIDataRow import AQIDataRow
 import services.city_service as city_service
 from db.database import Database
 from models.service import Service
-from utils.utils import get_aqi_level
+from utils.serviceUtils import get_aqi_level
 
 
 def _get_aqi_history_by_city_stmt(city_name: str) -> Select:
