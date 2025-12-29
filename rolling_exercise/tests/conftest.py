@@ -1,13 +1,5 @@
-import pytest
-import asyncio
-from httpx import AsyncClient, ASGITransport
-from app.main import create_app
 from db.database import Database
 from settings import settings
-import pytest
-import asyncio
-from httpx import AsyncClient, ASGITransport
-from app.main import create_app
 
 import pytest
 from httpx import AsyncClient, ASGITransport
