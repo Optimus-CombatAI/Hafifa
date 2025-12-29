@@ -167,7 +167,11 @@ def create_holes_in_reports(report_df: pd.DataFrame) -> None:
 
 
 def get_random_date_from_report(report_df: pd.DataFrame) -> datetime.date:
-    return report_df.loc[report_df.index[len(report_df) // 2], "date"].date()
+    return report_df.loc[report_df.sample(1).index[0], "date"].date()
+
+
+def get_random_city_from_report(report_df: pd.DataFrame) -> str:
+    return report_df.loc[report_df.sample(1).index[0], "city"]
 
 
 def check_equality_alerts_return_value(wanted_df: pd.DataFrame, got_df: pd.DataFrame) -> bool:
@@ -181,6 +185,32 @@ def check_equality_alerts_return_value(wanted_df: pd.DataFrame, got_df: pd.DataF
     )
 
     got_df_norm = got_df.copy().drop(columns=["id"])
+    got_df_norm = got_df_norm[wanted_df_norm.columns]
+
+    wanted_df_norm["date"] = pd.to_datetime(wanted_df_norm["date"])
+    got_df_norm["date"] = pd.to_datetime(got_df_norm["date"])
+
+    wanted_df_norm = wanted_df_norm.sort_values(
+        by=wanted_df_norm.columns.tolist()
+    ).reset_index(drop=True)
+
+    got_df_norm = got_df_norm.sort_values(
+        by=got_df_norm.columns.tolist()
+    ).reset_index(drop=True)
+
+    return wanted_df_norm.equals(got_df_norm)
+
+
+def check_equality_aqi_statistics_return_value(wanted_df: pd.DataFrame, got_df: pd.DataFrame) -> bool:
+    if wanted_df.shape[0] == 0 or got_df.shape[0] == 0:
+        return wanted_df.shape[0] == 0 and got_df.shape[0] == 0
+
+    wanted_df_norm = (
+        wanted_df.copy()
+        .drop(columns=["city", "PM2.5", "NO2", "CO2"])
+    )
+
+    got_df_norm = got_df.copy()
     got_df_norm = got_df_norm[wanted_df_norm.columns]
 
     wanted_df_norm["date"] = pd.to_datetime(wanted_df_norm["date"])
