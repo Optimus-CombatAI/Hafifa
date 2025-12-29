@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     DATE_FORMAT: str = "%Y-%m-%d"
 
     USE_DUMMY_DATASET: bool = False
-    USE_DATA_FILL: bool = True
+    USE_DATA_FILL: bool = False
     METHOD: str = "from_data"
 
     PM25_MEDIAN: int = 15
@@ -16,6 +16,8 @@ class Settings(BaseSettings):
 
     CO2_MEAN: int = 420
     CO2_STD: int = 50
+
+    ALERT_OVERALL_AQI: int = 300
 
     DUPLICATION_ERROR: str = '23505'
     DELETE_PREV_TABLES: bool = True

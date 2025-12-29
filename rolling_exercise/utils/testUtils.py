@@ -1,5 +1,4 @@
 import datetime
-import random
 from io import BytesIO
 from typing import Dict, Tuple
 
@@ -14,7 +13,7 @@ from settings import settings
 logger = logging.getLogger(__name__)
 
 
-def _mock_csv_file(df: pd.DataFrame) -> Dict[str, Tuple[str, bytes, str]]:
+def mock_csv_file(df: pd.DataFrame) -> Dict[str, Tuple[str, bytes, str]]:
     csv_buffer = BytesIO()
     df.to_csv(csv_buffer, index=False)
     csv_bytes = csv_buffer.getvalue()
@@ -117,7 +116,7 @@ def fill_weather_report_by_dataset_data(report_df: pd.DataFrame) -> None:
     report_df["CO2"] = _fill_column_with_empirical_noise(report_df["CO2"], pollutants_data.co2_vals)
 
 
-def _fill_weather_report(report_df: pd.DataFrame, method: str = "dataset") -> None:
+def fill_weather_report(report_df: pd.DataFrame, method: str = "dataset") -> None:
     if method == "internet":
         fill_weather_report_by_internet_data(report_df)
     else:
@@ -136,7 +135,6 @@ def _fill_dates(report_df: pd.DataFrame) -> None:
         raise ValueError("Not enough unique dates in the given range")
 
     unique_days = np.random.choice(days, size=n, replace=False)
-
     report_df["date"] = start + pd.to_timedelta(unique_days, unit="D")
 
 
@@ -150,8 +148,50 @@ def create_random_report(size: int = 5) -> pd.DataFrame:
     column_names = ['date', 'city', 'PM2.5', 'NO2', 'CO2']
     report_df = pd.DataFrame(columns=column_names, index=range(size))
 
-    _fill_weather_report(report_df)
+    fill_weather_report(report_df)
     _fill_dates(report_df)
     _fill_cities(report_df)
 
     return report_df.copy()
+
+
+def invalidate_date(report_df: pd.DataFrame) -> None:
+    report_df["date"] = report_df["date"].astype(object)
+    report_df.loc[report_df.index[0], "date"] = "not-1-date"
+
+
+def create_holes_in_reports(report_df: pd.DataFrame) -> None:
+    report_df.loc[report_df.index[0], "PM2.5"] = pd.NaT
+    report_df.loc[report_df.index[0], "NO2"] = pd.NaT
+    report_df.loc[report_df.index[0], "CO2"] = pd.NaT
+
+
+def get_random_date_from_report(report_df: pd.DataFrame) -> datetime.date:
+    return report_df.loc[report_df.index[len(report_df) // 2], "date"].date()
+
+
+def check_equality_alerts_return_value(wanted_df: pd.DataFrame, got_df: pd.DataFrame) -> bool:
+    if wanted_df.shape[0] == 0 or got_df.shape[0] == 0:
+        return wanted_df.shape[0] == 0 and got_df.shape[0] == 0
+
+    wanted_df_norm = (
+        wanted_df.copy()
+        .drop(columns=["PM2.5", "NO2", "CO2"])
+        .rename(columns={"city": "city_name"})
+    )
+
+    got_df_norm = got_df.copy().drop(columns=["id"])
+    got_df_norm = got_df_norm[wanted_df_norm.columns]
+
+    wanted_df_norm["date"] = pd.to_datetime(wanted_df_norm["date"])
+    got_df_norm["date"] = pd.to_datetime(got_df_norm["date"])
+
+    wanted_df_norm = wanted_df_norm.sort_values(
+        by=wanted_df_norm.columns.tolist()
+    ).reset_index(drop=True)
+
+    got_df_norm = got_df_norm.sort_values(
+        by=got_df_norm.columns.tolist()
+    ).reset_index(drop=True)
+
+    return wanted_df_norm.equals(got_df_norm)

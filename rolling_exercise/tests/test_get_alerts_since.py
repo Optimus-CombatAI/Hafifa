@@ -1,47 +1,73 @@
+import pandas as pd
 import pytest
 from starlette import status
 
 from settings import settings
-from utils.testUtils import create_random_report, mock_csv_file
+from utils.serviceUtils import fill_aqi_data
+from utils.testUtils import create_random_report, mock_csv_file, get_random_date_from_report, check_equality_alerts_return_value
 
 
-class TestGetAlerts:
-    route = "alerts"
-
-    @pytest.mark.asyncio
-    async def test_upload_file(self, client):
-        report_df = create_random_report()
-        files = _mock_csv_file(report_df)
-
-        response = await client.post(f"{settings.BASE_APP_DIR}/{self.route}/upload", files=files)
-        assert response.status_code == status.HTTP_201_CREATED
+class TestGetAlertsSince:
+    url = f"{settings.BASE_APP_DIR}/alerts/since"
 
     @pytest.mark.asyncio
-    async def test_double_upload(self, client):
+    async def test_get_alerts_since_random(self, client):
         report_df = create_random_report()
-        files = _mock_csv_file(report_df)
+        files = mock_csv_file(report_df)
+        await client.post(f"{settings.BASE_APP_DIR}/air_quality/upload", files=files)
 
-        response_1 = await client.post(f"{settings.BASE_APP_DIR}/{self.route}/upload", files=files)
-        assert response_1.status_code == status.HTTP_201_CREATED
+        random_date = get_random_date_from_report(report_df)
+        response = await client.get(self.url + f"?start_date={random_date}")
 
-        response_2 = await client.post(f"{settings.BASE_APP_DIR}/{self.route}/upload", files=files)
-        assert response_2.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_200_OK
+
+        fill_aqi_data(report_df)
+        wanted_df = report_df[(report_df["date"] > pd.to_datetime(random_date)) & (report_df['overall_aqi'] > 300)]
+        response_df = pd.DataFrame(response.json())
+
+        assert check_equality_alerts_return_value(wanted_df, response_df)
 
     @pytest.mark.asyncio
-    async def test_invalid_dates(self, client):
+    async def test_get_alerts_since_min(self, client):
         report_df = create_random_report()
-        invalidate_date(report_df)
-        files = _mock_csv_file(report_df)
+        files = mock_csv_file(report_df)
+        await client.post(f"{settings.BASE_APP_DIR}/air_quality/upload", files=files)
 
-        response = await client.post(f"{settings.BASE_APP_DIR}/{self.route}/upload", files=files)
+        earliest_date = report_df['date'].min().date()
+        response = await client.get(self.url + f"?start_date={earliest_date}")
+
+        assert response.status_code == status.HTTP_200_OK
+
+        fill_aqi_data(report_df)
+        wanted_df = report_df[(report_df["date"] > pd.to_datetime(earliest_date)) & (report_df['overall_aqi'] > settings.ALERT_OVERALL_AQI)]
+        response_df = pd.DataFrame(response.json())
+
+        assert check_equality_alerts_return_value(wanted_df, response_df)
+
+    @pytest.mark.asyncio    
+    async def test_get_alerts_since_max(self, client):
+        report_df = create_random_report()
+        files = mock_csv_file(report_df)
+        await client.post(f"{settings.BASE_APP_DIR}/air_quality/upload", files=files)
+
+        latest_date = report_df['date'].max().date()
+        response = await client.get(self.url + f"?start_date={latest_date}")
+
+        assert response.status_code == status.HTTP_200_OK
+
+        fill_aqi_data(report_df)
+        wanted_df = report_df[(report_df["date"] > pd.to_datetime(latest_date)) & (
+                    report_df['overall_aqi'] > settings.ALERT_OVERALL_AQI)]
+        response_df = pd.DataFrame(response.json())
+
+        assert check_equality_alerts_return_value(wanted_df, response_df)
+
+    @pytest.mark.asyncio
+    async def test_get_alerts_since_invalid(self, client):
+        report_df = create_random_report()
+        files = mock_csv_file(report_df)
+        await client.post(f"{settings.BASE_APP_DIR}/air_quality/upload", files=files)
+
+        response = await client.get(self.url + "?start_date=date-1-not")
+
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-    @pytest.mark.asyncio
-    async def test_missing_data(self, client):
-        report_df = create_random_report()
-        create_holes_in_reports(report_df)
-        files = _mock_csv_file(report_df)
-
-        response = await client.post(f"{settings.BASE_APP_DIR}/{self.route}/upload", files=files)
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-

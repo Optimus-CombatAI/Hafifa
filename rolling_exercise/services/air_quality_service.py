@@ -24,9 +24,8 @@ from models.airQualityDataRow import AirQualityDataRow
 from models.service import Service
 from services.city_service import CityService
 from settings import settings
-from utils.serviceUtils import is_valid_date
-from utils.testUtils import _fill_weather_report
-from utils.calculate_aqi import calculate_aqi
+from utils.serviceUtils import is_valid_date, fill_aqi_data
+from utils.testUtils import fill_weather_report
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +33,7 @@ logger = logging.getLogger(__name__)
 def _validate_fullness(data_df: pd.DataFrame) -> None:
     if settings.USE_DATA_FILL:
         logger.info("used auto fill")
-        _fill_weather_report(data_df, settings.METHOD)
+        fill_weather_report(data_df, settings.METHOD)
 
     else:
         if data_df.isnull().values.any():
@@ -51,13 +50,6 @@ def _validate_date_column(dates_column: pd.Series) -> None:
 def _validate_file_correctness(data_df: pd.DataFrame) -> None:
     _validate_fullness(data_df)
     _validate_date_column(data_df["date"])
-
-
-def _fill_aqi_data(report_data_df: pd.DataFrame) -> None:
-    calc_column_aqi = np.vectorize(calculate_aqi)
-    report_data_df["overall_aqi"], report_data_df["aqi_level"] = calc_column_aqi(report_data_df["PM2.5"],
-                                                                                 report_data_df["NO2"],
-                                                                                 report_data_df["CO2"])
 
 
 def _get_air_quality_time_range_stmt(start_date: datetime.date, end_date: datetime.date) -> Select:
@@ -174,7 +166,7 @@ class AirQualityService(Service):
         await self._insert_cities(city_names_df)
 
         report_data_df = data_df[["date", "city", "PM2.5", "NO2", "CO2"]].rename(columns={"city": "name"})
-        _fill_aqi_data(report_data_df)
+        fill_aqi_data(report_data_df)
         await self._insert_reports(report_data_df)
 
     async def get_air_quality_by_time_range(self, start_date: str, end_date: str) -> List[AirQualityDataRow]:

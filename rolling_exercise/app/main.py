@@ -14,16 +14,15 @@ from logger import LoggerConfig
 from settings import settings
 
 
-async def _on_startup(app_db: Database, to_reset: bool = False) -> None:
+async def _on_startup(app_db: Database) -> None:
     LoggerConfig()
     await app_db.create_tables()
-    await db.reset_tables(to_reset)
 
 
 def create_lifespan(app_db: Database):
     @asynccontextmanager
     async def lifespan(fast_api_app: FastAPI):
-        await _on_startup(app_db, True)
+        await _on_startup(app_db)
         yield
 
     return lifespan
@@ -47,6 +46,6 @@ def create_app(app_db: Database) -> FastAPI:
 
 
 if __name__ == '__main__':
-    db = Database(settings.DB_URL, settings.MOCK_SCHEME)
+    db = Database(settings.DB_URL, settings.SCHEME)
     app = create_app(db)
     uvicorn.run(app, host='127.0.0.1', port=8000)

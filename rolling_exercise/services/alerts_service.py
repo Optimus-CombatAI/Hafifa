@@ -26,7 +26,7 @@ def _get_all_alert_stmt() -> Select:
         )
         .join(Report.city)
         .where(
-            Report.overall_aqi > 300
+            Report.overall_aqi > settings.ALERT_OVERALL_AQI
         )
     )
 
@@ -48,7 +48,7 @@ def _get_alerts_since_date_stmt(start_date: datetime) -> Select:
         )
         .join(Report.city)
         .where(
-            (Report.overall_aqi > 300) & (Report.date > start_date)
+            (Report.overall_aqi > settings.ALERT_OVERALL_AQI) & (Report.date > start_date)
         )
     )
 
@@ -66,7 +66,7 @@ def _get_alerts_by_city_stmt(city_name: str) -> Select:
         )
         .join(Report.city)
         .where(
-            (Report.overall_aqi > 300) & Report.city.has(City.name == city_name)
+            (Report.overall_aqi > settings.ALERT_OVERALL_AQI) & Report.city.has(City.name == city_name)
         )
     )
 

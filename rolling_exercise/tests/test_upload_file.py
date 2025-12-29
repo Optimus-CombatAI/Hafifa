@@ -1,49 +1,47 @@
 import pytest
 from starlette import status
-from starlette.testclient import TestClient
 
-from db.database import Database
-from app.main import create_app
 from settings import settings
-from utils.testUtils import create_random_report, _mock_csv_file
+from utils.testUtils import create_random_report, mock_csv_file, invalidate_date, create_holes_in_reports
 
 
 class TestUploadFile:
-    route = "air_quality"
+    url = f"{settings.BASE_APP_DIR}/air_quality/upload"
 
     @pytest.mark.asyncio
     async def test_upload_file(self, client):
         report_df = create_random_report()
-        files = _mock_csv_file(report_df)
+        files = mock_csv_file(report_df)
 
-        response = await client.post(f"{settings.BASE_APP_DIR}/{self.route}/upload", files=files)
-        if response.status_code != status.HTTP_201_CREATED:
-            print(f"\nServer Error Details: {response.json()}")
-
+        response = await client.post(self.url, files=files)
         assert response.status_code == status.HTTP_201_CREATED
 
     @pytest.mark.asyncio
     async def test_double_upload(self, client):
         report_df = create_random_report()
-        files = _mock_csv_file(report_df)
+        files = mock_csv_file(report_df)
 
-        response_1 = await client.post(f"{settings.BASE_APP_DIR}/{self.route}/upload", files=files)
-        if response_1.status_code != status.HTTP_201_CREATED:
-            print(f"\nFirst Server Error Details: {response_1.json()}")
-
+        response_1 = await client.post(self.url, files=files)
         assert response_1.status_code == status.HTTP_201_CREATED
 
-        response_2 = await client.post(f"{settings.BASE_APP_DIR}/{self.route}/upload", files=files)
-        if response_2.status_code != status.HTTP_400_BAD_REQUEST:
-            print(f"\nSecond Server Error Details: {response_2.json()}")
-
+        response_2 = await client.post(self.url, files=files)
         assert response_2.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.asyncio
     async def test_invalid_dates(self, client):
-        pass
+        report_df = create_random_report()
+        invalidate_date(report_df)
+        files = mock_csv_file(report_df)
 
+        response = await client.post(self.url, files=files)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.asyncio
     async def test_missing_data(self, client):
-        pass
+        report_df = create_random_report()
+        create_holes_in_reports(report_df)
+        files = mock_csv_file(report_df)
+
+        response = await client.post(self.url, files=files)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
