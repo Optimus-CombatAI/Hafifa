@@ -3,10 +3,10 @@ import logging
 from typing import List
 
 from contextlib import asynccontextmanager
-from sqlalchemy import MetaData, text, Executable, NullPool
+from sqlalchemy import MetaData, Executable
 from sqlalchemy.exc import OperationalError, IntegrityError
 from asyncpg.exceptions import PostgresConnectionError
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 
 from exceptions.connectionException import ConnectionException

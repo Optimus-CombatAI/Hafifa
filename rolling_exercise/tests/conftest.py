@@ -14,9 +14,6 @@ from httpx import AsyncClient, ASGITransport
 from app.main import create_app
 
 
-# Note: We do NOT define a session-scoped event_loop here.
-# Pytest-asyncio will create a fresh loop for every function by default.
-
 @pytest.fixture(scope="function")
 async def test_db():
     db = Database(db_url=settings.DB_URL, scheme=settings.MOCK_SCHEME)
@@ -32,7 +29,6 @@ async def test_db():
 
 @pytest.fixture(scope="function")
 async def client(test_db):
-    # 4. Inject the fresh test_db into your app factory
     app = create_app(app_db=test_db)
 
     async with AsyncClient(

@@ -1,12 +1,11 @@
 from typing import Tuple
 
-from fastapi import APIRouter, HTTPException
+from fastapi import HTTPException
 from starlette import status
 
 from db.database import Database
 from exceptions.notExistingCityException import NotExistingCityException
 from models.AQIDataRow import AQIDataRow
-# import services.aqi_statistics_service as aqi_statistics_service
 from models.appRouter import AppRouter
 from services.aqi_statistics_service import AQIStatisticsService
 
