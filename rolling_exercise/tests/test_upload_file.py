@@ -8,7 +8,6 @@ from utils.testUtils import create_random_report, mock_csv_file, invalidate_date
 class TestUploadFile:
     url = f"{settings.BASE_APP_DIR}/air_quality/upload"
 
-    @pytest.mark.asyncio
     async def test_upload_file(self, client):
         report_df = create_random_report()
         files = mock_csv_file(report_df)
@@ -16,7 +15,6 @@ class TestUploadFile:
         response = await client.post(self.url, files=files)
         assert response.status_code == status.HTTP_201_CREATED
 
-    @pytest.mark.asyncio
     async def test_double_upload(self, client):
         report_df = create_random_report()
         files = mock_csv_file(report_df)
@@ -27,7 +25,6 @@ class TestUploadFile:
         response_2 = await client.post(self.url, files=files)
         assert response_2.status_code == status.HTTP_400_BAD_REQUEST
 
-    @pytest.mark.asyncio
     async def test_invalid_dates(self, client):
         report_df = create_random_report()
         invalidate_date(report_df)
@@ -36,7 +33,6 @@ class TestUploadFile:
         response = await client.post(self.url, files=files)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    @pytest.mark.asyncio
     async def test_missing_data(self, client):
         report_df = create_random_report()
         create_holes_in_reports(report_df)
@@ -44,4 +40,3 @@ class TestUploadFile:
 
         response = await client.post(self.url, files=files)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-

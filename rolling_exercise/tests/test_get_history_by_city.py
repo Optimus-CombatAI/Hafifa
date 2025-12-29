@@ -18,7 +18,6 @@ def _get_random_string(n):
 class TestGetHistoryByCity:
     url = f"{settings.BASE_APP_DIR}/aqi_statistics/history"
 
-    @pytest.mark.asyncio
     async def test_get_history_by_random_city(self, client):
         report_df = create_random_report()
         files = mock_csv_file(report_df)
@@ -34,7 +33,6 @@ class TestGetHistoryByCity:
 
         assert check_equality_aqi_statistics_return_value(wanted_df, response_df)
 
-    @pytest.mark.asyncio
     async def test_get_history_not_existing_city(self, client):
         report_df = create_random_report()
         files = mock_csv_file(report_df)

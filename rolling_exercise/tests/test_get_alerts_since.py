@@ -10,7 +10,6 @@ from utils.testUtils import create_random_report, mock_csv_file, get_random_date
 class TestGetAlertsSince:
     url = f"{settings.BASE_APP_DIR}/alerts/since"
 
-    @pytest.mark.asyncio
     async def test_get_alerts_since_random(self, client):
         report_df = create_random_report()
         files = mock_csv_file(report_df)
@@ -27,7 +26,6 @@ class TestGetAlertsSince:
 
         assert check_equality_alerts_return_value(wanted_df, response_df)
 
-    @pytest.mark.asyncio
     async def test_get_alerts_since_min(self, client):
         report_df = create_random_report()
         files = mock_csv_file(report_df)
@@ -44,7 +42,6 @@ class TestGetAlertsSince:
 
         assert check_equality_alerts_return_value(wanted_df, response_df)
 
-    @pytest.mark.asyncio    
     async def test_get_alerts_since_max(self, client):
         report_df = create_random_report()
         files = mock_csv_file(report_df)
@@ -62,7 +59,6 @@ class TestGetAlertsSince:
 
         assert check_equality_alerts_return_value(wanted_df, response_df)
 
-    @pytest.mark.asyncio
     async def test_get_alerts_since_invalid(self, client):
         report_df = create_random_report()
         files = mock_csv_file(report_df)
