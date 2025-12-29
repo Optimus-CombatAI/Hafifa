@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from sqlalchemy import select, func, Select
 
@@ -15,6 +15,7 @@ from utils.serviceUtils import get_aqi_level
 def _get_aqi_history_by_city_stmt(city_name: str) -> Select:
     stmt = (
         select(
+            Report.date,
             Report.overall_aqi,
             Report.aqi_level
         )
@@ -28,18 +29,16 @@ def _get_aqi_history_by_city_stmt(city_name: str) -> Select:
 
 def _construct_history_aqi_data_row(reports_results: List[Report]) -> List[AQIDataRow]:
     data_rows = [AQIDataRow.from_results((
-        report.overall_aqi, report.aqi_level
+        report.date, report.overall_aqi, report.aqi_level
     )) for report in reports_results]
 
     return data_rows
 
 
-def _construct_avg_data_row(overall_aqi: str) -> AQIDataRow:
+def _construct_avg_data_row(overall_aqi: str) -> Tuple[int, str]:
     overall_aqi = int(overall_aqi)
 
-    aqi_data_row = AQIDataRow.from_results((
-        overall_aqi, get_aqi_level(overall_aqi)
-    ))
+    aqi_data_row = (overall_aqi, get_aqi_level(overall_aqi))
 
     return aqi_data_row
 
@@ -88,7 +87,7 @@ class AQIStatisticsService(Service):
 
         return aqi_data_rows
 
-    async def get_aqi_avg_by_city(self, city_name: str) -> AQIDataRow:
+    async def get_aqi_avg_by_city(self, city_name: str) -> Tuple[int, str]:
         if not await self.city_service.is_existing_city(city_name):
             raise NotExistingCityException
 

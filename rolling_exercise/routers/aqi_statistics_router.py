@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from fastapi import APIRouter, HTTPException
 from starlette import status
 
@@ -32,7 +34,7 @@ class AQIStatisticsRouter(AppRouter):
         except NotExistingCityException as e:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
 
-    async def get_avg_aqi_by_city_handler(self, city_name: str) -> AQIDataRow:
+    async def get_avg_aqi_by_city_handler(self, city_name: str) -> Tuple[int, str]:
         """
         This function returns the average aqi score for a given city
         :param city_name: the name of the city to calculate the average aqi
