@@ -1,26 +1,28 @@
 import pandas as pd
 import pytest
+from httpx import AsyncClient
 
-from conftest import settings
-from tests.inputs.get_alerts_since_test_input import test_random_input, test_min_input, test_max_input, test_invalid_input
-from tests.outputs.get_alerts_since_test_output import test_random_output, test_min_output, test_max_output, test_invalid_output
+from consts import BASE_APP_URL
+from db.pgDatabase import PGDatabase
+from tests.inputs.get_alerts_since_test_input import test_random_input, test_min_date_input, test_max_date_input, test_invalid_input, TestAlertsInput
+from tests.outputs.get_alerts_since_test_output import test_random_output, test_min_date_output, test_max_date_output, test_invalid_output, TestAlertsOutput
 from tests.insert_utilities import insert_data_manually
 
 
 class TestGetAlertsSince:
-    url = f"{settings.BASE_APP_URL}/alerts/since"
+    url = f"{BASE_APP_URL}/alerts/since"
 
     @pytest.mark.parametrize(
         "test_input, test_output",
         [
             (test_random_input, test_random_output),
-            (test_min_input, test_min_output),
-            (test_max_input, test_max_output),
+            (test_min_date_input, test_min_date_output),
+            (test_max_date_input, test_max_date_output),
             (test_invalid_input, test_invalid_output),
         ],
         ids=["random_input", "min_date", "max_date", "invalid_date"],
     )
-    async def test_get_alerts_since(self, test_db, client, test_input, test_output):
+    async def test_get_alerts_since(self, test_db: PGDatabase, client: AsyncClient, test_input: TestAlertsInput, test_output: TestAlertsOutput):
         report_df = test_input.report_df
         await insert_data_manually(test_db, report_df)
 

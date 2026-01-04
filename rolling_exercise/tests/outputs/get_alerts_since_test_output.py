@@ -6,6 +6,7 @@ from starlette import status
 
 @dataclass
 class TestAlertsOutput:
+    __test__ = False
     response_code: int
     response_df: pd.DataFrame
 
@@ -28,12 +29,12 @@ response_2 = {
     'aqi_level': ['Hazardous', "Hazardous"]
 }
 
-test_min_output = TestAlertsOutput(status.HTTP_200_OK, pd.DataFrame(response_2))
+test_min_date_output = TestAlertsOutput(status.HTTP_200_OK, pd.DataFrame(response_2))
 
 response_3 = {
 
 }
 
-test_max_output = TestAlertsOutput(status.HTTP_200_OK, pd.DataFrame(response_3))
+test_max_date_output = TestAlertsOutput(status.HTTP_200_OK, pd.DataFrame(response_3))
 
 test_invalid_output = TestAlertsOutput(status.HTTP_400_BAD_REQUEST, pd.DataFrame(response_3))

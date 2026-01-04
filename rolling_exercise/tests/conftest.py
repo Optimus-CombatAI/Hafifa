@@ -1,12 +1,9 @@
-from db.pgDatabase import PGDatabase
-from settings import Settings
-
 import pytest
 from httpx import AsyncClient, ASGITransport
+
+from db.pgDatabase import PGDatabase
+from consts import settings
 from app.main import create_app
-
-
-settings = Settings(SCHEME="mock_rolling_exercise")
 
 
 @pytest.fixture(scope="function")
@@ -23,7 +20,7 @@ async def test_db():
 
 
 @pytest.fixture(scope="function")
-async def client(test_db):
+async def client(test_db) -> AsyncClient:
     app = create_app(app_db=test_db)
 
     async with AsyncClient(

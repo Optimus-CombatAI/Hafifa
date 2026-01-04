@@ -28,8 +28,6 @@ class Settings(BaseSettings):
     DB: str = "prepSQL"
     SCHEME: str = "rolling_exercise"
 
-    BASE_APP_URL: str = "http://127.0.0.1:8000"
-
     DB_USER: str
     DB_PASSWORD: str
     DATA_PATH: str

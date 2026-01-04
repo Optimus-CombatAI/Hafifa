@@ -7,6 +7,7 @@ from pandas import Timestamp
 
 @dataclass
 class TestAlertsInput:
+    __test__ = False
     date: str
     report_df: pd.DataFrame
 
@@ -29,7 +30,7 @@ report_2 = {
     'CO2': [489, 437, 426, 365, 411]
 }
 
-test_min_input = TestAlertsInput("2025-11-10", pd.DataFrame(report_2))
+test_min_date_input = TestAlertsInput("2025-11-10", pd.DataFrame(report_2))
 
 
 report_3 = {
@@ -40,6 +41,6 @@ report_3 = {
     'CO2': [470, 435, 395, 466, 368]
 }
 
-test_max_input = TestAlertsInput("2025-11-15", pd.DataFrame(report_3))
+test_max_date_input = TestAlertsInput("2025-11-15", pd.DataFrame(report_3))
 
 test_invalid_input = TestAlertsInput("date-1-not", pd.DataFrame(report_3))

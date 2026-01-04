@@ -178,9 +178,6 @@ def check_equality_alerts_return_value(wanted_df: pd.DataFrame, got_df: pd.DataF
     if wanted_df.shape[0] == 0 or got_df.shape[0] == 0:
         return wanted_df.shape[0] == 0 and got_df.shape[0] == 0
 
-    print("wanted:\n", wanted_df)
-    print("got:\n", got_df)
-
     wanted_df_norm = (
         wanted_df.copy()
         .rename(columns={"city": "city_name"})

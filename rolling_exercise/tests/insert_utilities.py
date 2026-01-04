@@ -4,6 +4,7 @@ import pandas as pd
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.sql.dml import Insert
 
+from db.pgDatabase import PGDatabase
 from entities.city import City
 from entities.report import Report
 from utils.serviceUtils import fill_aqi_data
@@ -25,6 +26,7 @@ def insrt_reports_stmt(report_df: pd.DataFrame) -> List[Insert]:
 
     fill_aqi_data(report_data_df)
     stmts = []
+
     for _, report_row in report_data_df.iterrows():
         stmt = insert(Report).values(
                 date=report_row["date"],
@@ -40,7 +42,7 @@ def insrt_reports_stmt(report_df: pd.DataFrame) -> List[Insert]:
     return stmts
 
 
-async def insert_data_manually(test_db, report_df: pd.DataFrame):
+async def insert_data_manually(test_db: PGDatabase, report_df: pd.DataFrame):
     await test_db.execute_with_no_results(insert_cities_stmt(report_df[["city"]]))
 
     report_stmts = insrt_reports_stmt(report_df)

@@ -6,6 +6,7 @@ from starlette import status
 
 @dataclass
 class TestHistoryOutput:
+    __test__ = False
     response_code: int
     response_df: pd.DataFrame
 
@@ -16,7 +17,7 @@ response_1 = {
     'aqi_level': ['Hazardous', 'Very Unhealthy']
 }
 
-test_history_random_city_output = TestHistoryOutput(status.HTTP_200_OK, pd.DataFrame(response_1))
+test_history_city_output = TestHistoryOutput(status.HTTP_200_OK, pd.DataFrame(response_1))
 
 response_2 = {
 
