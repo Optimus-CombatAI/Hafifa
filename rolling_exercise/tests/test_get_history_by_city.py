@@ -3,13 +3,11 @@ import random
 
 import pandas as pd
 import pytest
-from starlette import status
 
 from conftest import settings
 from tests.inputs.get_history_test_input import test_history_random_city_input, test_history_not_existing_city_input
 from tests.insert_utilities import insert_data_manually
 from tests.outputs.get_history_test_output import test_history_random_city_output, test_history_not_existing_city_output
-from tests.testUtils import create_random_report, mock_csv_file
 
 
 def _get_random_string(n):

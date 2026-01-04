@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import List
 
 import pandas as pd
@@ -7,7 +6,6 @@ from sqlalchemy.sql.dml import Insert
 
 from entities.city import City
 from entities.report import Report
-from settings import settings
 from utils.serviceUtils import fill_aqi_data
 
 
