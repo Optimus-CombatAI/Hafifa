@@ -1,8 +1,7 @@
 from sqlalchemy import select, exists, Select
 
-from db.database import Database
 from entities.city import City
-from models.service import Service
+from services.service import Service
 
 
 def _get_existing_cities_stmt(city_name: str) -> Select:
@@ -15,7 +14,7 @@ def _get_existing_cities_stmt(city_name: str) -> Select:
 
 
 class CityService(Service):
-    def __init__(self, db: Database):
+    def __init__(self, db):
         super().__init__(db)
 
     async def is_existing_city(self, city_name: str) -> bool:

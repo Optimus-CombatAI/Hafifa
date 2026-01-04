@@ -7,7 +7,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-from db.database import Database
+from db.pgDatabase import PGDatabase
 from entities.city import City
 from entities.report import Report
 from sqlalchemy import select
@@ -21,11 +21,11 @@ from exceptions.notFullDataFileException import NotFullDataFileException
 from exceptions.notExistingCityException import NotExistingCityException
 from exceptions.notValidDateException import NotValidDateException
 from models.airQualityDataRow import AirQualityDataRow
-from models.service import Service
+from services.service import Service
 from services.city_service import CityService
 from settings import settings
 from utils.serviceUtils import is_valid_date, fill_aqi_data
-from utils.testUtils import fill_weather_report
+from tests.testUtils import fill_weather_report
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ def _get_air_quality_data_rows(reports_results: List[Report]) -> List[AirQuality
 
 
 class AirQualityService(Service):
-    def __init__(self, db: Database):
+    def __init__(self, db: PGDatabase):
         super().__init__(db)
         self.city_service = CityService(db)
 

@@ -1,19 +1,19 @@
 
-from fastapi import HTTPException, UploadFile, status
+from fastapi import HTTPException, UploadFile, status, APIRouter
 from starlette.responses import Response
 
-from db.database import Database
+from db.pgDatabase import PGDatabase
 from models.airQualityDataRow import AirQualityDataRow
 from exceptions.notValidDateException import NotValidDateException
 from exceptions.notExistingCityException import NotExistingCityException
 from exceptions.dbIntegrityException import DBIntegrityException
-from models.appRouter import AppRouter
 from services.air_quality_service import AirQualityService
 
 
-class AirQualityRouter(AppRouter):
-    def __init__(self, db: Database):
-        super().__init__("/air_quality", ["Air Quality"], db, AirQualityService)
+class AirQualityRouter(APIRouter):
+    def __init__(self, db: PGDatabase):
+        super().__init__(prefix="/air_quality", tags=["Air Quality"])
+        self.service = AirQualityService(db)
 
         self.add_api_route("/upload", self.upload_air_quality_handler, methods=["POST"])
         self.add_api_route("/by_time", self.get_air_quality_by_time_range_handler, methods=["GET"])
@@ -59,6 +59,7 @@ class AirQualityRouter(AppRouter):
 
         try:
             air_quality_data_rows = await self.service.get_air_quality_by_city_name(city_name)
+
             return air_quality_data_rows
 
         except NotExistingCityException as e:

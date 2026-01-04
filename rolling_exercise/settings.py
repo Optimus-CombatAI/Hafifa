@@ -27,9 +27,8 @@ class Settings(BaseSettings):
 
     DB: str = "prepSQL"
     SCHEME: str = "rolling_exercise"
-    MOCK_SCHEME: str = "mock_rolling_exercise"
 
-    BASE_APP_DIR: str = "http://127.0.0.1:8000"
+    BASE_APP_URL: str = "http://127.0.0.1:8000"
 
     DB_USER: str
     DB_PASSWORD: str

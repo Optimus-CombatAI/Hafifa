@@ -2,13 +2,13 @@ from typing import List, Tuple
 
 from sqlalchemy import select, func, Select
 
+from db.pgDatabase import PGDatabase
 from exceptions.notExistingCityException import NotExistingCityException
 from entities.city import City
 from entities.report import Report
 from models.AQIDataRow import AQIDataRow
-import services.city_service as city_service
-from db.database import Database
-from models.service import Service
+from services.city_service import CityService
+from services.service import Service
 from utils.serviceUtils import get_aqi_level
 
 
@@ -72,9 +72,9 @@ def _get_best_city_stmt():
 
 
 class AQIStatisticsService(Service):
-    def __init__(self, db: Database):
+    def __init__(self, db: PGDatabase):
         super().__init__(db)
-        self.city_service = city_service.CityService(db)
+        self.city_service = CityService(db)
 
     async def get_aqi_history_by_city(self, city_name: str) -> List[AQIDataRow]:
         if not await self.city_service.is_existing_city(city_name):

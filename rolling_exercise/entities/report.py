@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Date, ForeignKey
 from sqlalchemy.orm import relationship
 import pandas as pd
 
-from db.database import Base
+from db.pgDatabase import Base
 
 
 class Report(Base):

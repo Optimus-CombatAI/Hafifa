@@ -1,18 +1,18 @@
 from typing import Tuple
 
-from fastapi import HTTPException
+from fastapi import HTTPException, APIRouter
 from starlette import status
 
-from db.database import Database
+from db.pgDatabase import PGDatabase
 from exceptions.notExistingCityException import NotExistingCityException
 from models.AQIDataRow import AQIDataRow
-from models.appRouter import AppRouter
 from services.aqi_statistics_service import AQIStatisticsService
 
 
-class AQIStatisticsRouter(AppRouter):
-    def __init__(self, db: Database):
-        super().__init__("/aqi_statistics", ["AQI Statistics"], db, AQIStatisticsService)
+class AQIStatisticsRouter(APIRouter):
+    def __init__(self, db: PGDatabase):
+        super().__init__(prefix="/aqi_statistics", tags=["AQI Statistics"])
+        self.service = AQIStatisticsService(db)
 
         self.add_api_route("/history", self.get_aqi_history_by_city_handler, methods=["GET"])
         self.add_api_route("/average", self.get_avg_aqi_by_city_handler, methods=["GET"])

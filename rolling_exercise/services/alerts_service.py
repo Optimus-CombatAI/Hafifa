@@ -3,13 +3,13 @@ from typing import List
 
 from sqlalchemy import Select, select
 
-from db.database import Database
+from db.pgDatabase import PGDatabase
 from entities.city import City
 from entities.report import Report
 from exceptions.notExistingCityException import NotExistingCityException
 from exceptions.notValidDateException import NotValidDateException
 from models.alertReturnRow import AlertReturnRow
-from models.service import Service
+from services.service import Service
 from services.city_service import CityService
 from settings import settings
 from utils.serviceUtils import is_valid_date
@@ -74,7 +74,7 @@ def _get_alerts_by_city_stmt(city_name: str) -> Select:
 
 
 class AlertsService(Service):
-    def __init__(self, db: Database):
+    def __init__(self, db: PGDatabase):
         super().__init__(db)
         self.city_service = CityService(db)
 

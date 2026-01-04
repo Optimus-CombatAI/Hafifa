@@ -1,18 +1,18 @@
 
-from fastapi import HTTPException
+from fastapi import HTTPException, APIRouter
 from starlette import status
 
-from db.database import Database
+from db.pgDatabase import PGDatabase
 from exceptions.notValidDateException import NotValidDateException
 from exceptions.notExistingCityException import NotExistingCityException
 from models.alertReturnRow import AlertReturnRow
-from models.appRouter import AppRouter
 from services.alerts_service import AlertsService
 
 
-class AlertsRouter(AppRouter):
-    def __init__(self, db: Database):
-        super().__init__("/alerts", ["Alerts"], db, AlertsService)
+class AlertsRouter(APIRouter):
+    def __init__(self, db: PGDatabase):
+        super().__init__(prefix="/alerts", tags=["Alerts"])
+        self.service = AlertsService(db)
 
         self.add_api_route("/", self.get_all_alerts_handler, methods=["GET"])
         self.add_api_route("/since", self.get_alerts_since_date_handler, methods=["GET"])

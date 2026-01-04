@@ -9,6 +9,8 @@ from asyncpg.exceptions import PostgresConnectionError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 
+from db.cities_table import _define_cities_table
+from db.reports_table import _define_reports_table
 from exceptions.connectionException import ConnectionException
 from exceptions.dbDuplicationError import DBDuplicationError
 from settings import settings
@@ -27,7 +29,7 @@ def _handle_integrity_error(error: IntegrityError):
     raise error
 
 
-class Database:
+class PGDatabase:
     def __init__(self, db_url: str, scheme: str):
         self.engine = create_async_engine(
             db_url,
@@ -51,11 +53,8 @@ class Database:
         self._define_tables()
 
     def _define_tables(self):
-        from db.cities_table import _define_cities_table
-        from db.reports_table import _define_reports_table
-
-        _define_cities_table(self)
-        _define_reports_table(self)
+        _define_cities_table(self.metadata)
+        _define_reports_table(self.metadata)
 
     async def create_tables(self) -> None:
         async with self.engine.begin() as conn:

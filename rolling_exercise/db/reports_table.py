@@ -1,11 +1,9 @@
-from sqlalchemy import Table, Column, Integer, String, Date, ForeignKey, UniqueConstraint
-
-from db.database import Database
+from sqlalchemy import Table, Column, Integer, String, Date, ForeignKey, UniqueConstraint, MetaData
 
 
-def _define_reports_table(db: Database) -> Table:
+def _define_reports_table(metadata: MetaData) -> Table:
     reports = Table(
-        'reports', db.metadata,
+        'reports', metadata,
         Column('id', Integer, primary_key=True, autoincrement=True),
         Column('date', Date, nullable=False),
         Column('city_id', Integer, ForeignKey('cities.id', ondelete='CASCADE')),

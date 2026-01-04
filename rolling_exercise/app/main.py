@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 import uvicorn
 
 
-from db.database import Database
+from db.pgDatabase import PGDatabase
 from exceptions.connectionException import ConnectionException
 from routers.air_quality_router import AirQualityRouter
 from routers.aqi_statistics_router import AQIStatisticsRouter
@@ -14,12 +14,12 @@ from logger import LoggerConfig
 from settings import settings
 
 
-async def _on_startup(app_db: Database) -> None:
+async def _on_startup(app_db: PGDatabase) -> None:
     LoggerConfig()
     await app_db.create_tables()
 
 
-def create_lifespan(app_db: Database):
+def create_lifespan(app_db: PGDatabase):
     @asynccontextmanager
     async def lifespan(fast_api_app: FastAPI):
         await _on_startup(app_db)
@@ -28,7 +28,7 @@ def create_lifespan(app_db: Database):
     return lifespan
 
 
-def create_app(app_db: Database) -> FastAPI:
+def create_app(app_db: PGDatabase) -> FastAPI:
     fast_api_app = FastAPI(lifespan=create_lifespan(app_db))
 
     @fast_api_app.exception_handler(ConnectionException)
@@ -46,6 +46,6 @@ def create_app(app_db: Database) -> FastAPI:
 
 
 if __name__ == '__main__':
-    db = Database(settings.DB_URL, settings.SCHEME)
+    db = PGDatabase(settings.DB_URL, settings.SCHEME)
     app = create_app(db)
     uvicorn.run(app, host='127.0.0.1', port=8000)
