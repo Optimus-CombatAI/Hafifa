@@ -5,9 +5,11 @@ import pandas as pd
 import pytest
 from starlette import status
 
-from settings import settings
-from utils.serviceUtils import fill_aqi_data
-from utils.testUtils import create_random_report, mock_csv_file, get_random_city_from_report, check_equality_aqi_statistics_return_value
+from conftest import settings
+from tests.inputs.get_history_test_input import test_history_random_city_input, test_history_not_existing_city_input
+from tests.insert_utilities import insert_data_manually
+from tests.outputs.get_history_test_output import test_history_random_city_output, test_history_not_existing_city_output
+from tests.testUtils import create_random_report, mock_csv_file
 
 
 def _get_random_string(n):
@@ -16,28 +18,25 @@ def _get_random_string(n):
 
 
 class TestGetHistoryByCity:
-    url = f"{settings.BASE_APP_DIR}/aqi_statistics/history"
+    url = f"{settings.BASE_APP_URL}/aqi_statistics/history"
 
-    async def test_get_history_by_random_city(self, client):
-        report_df = create_random_report()
-        files = mock_csv_file(report_df)
-        await client.post(f"{settings.BASE_APP_DIR}/air_quality/upload", files=files)
+    @pytest.mark.parametrize(
+        "test_input, test_output",
+        [
+            (test_history_random_city_input, test_history_random_city_output),
+            (test_history_not_existing_city_input, test_history_not_existing_city_output)
+        ],
+        ids=["random_city", "not_existing_city"],
+    )
+    async def test_get_history_by_city(self, test_db, client, test_input, test_output):
+        report_df = test_input.report_df
+        await insert_data_manually(test_db, report_df)
 
-        random_city = get_random_city_from_report(report_df)
-        response = await client.get(self.url + f"?city_name={random_city}")
-        assert response.status_code == status.HTTP_200_OK
+        response = await client.get(self.url + f"?city_name={test_input.city}")
 
-        response_df = pd.DataFrame(response.json())
-        fill_aqi_data(report_df)
-        wanted_df = report_df[report_df["city"] == random_city]
+        assert response.status_code == test_output.response_code
 
-        assert check_equality_aqi_statistics_return_value(wanted_df, response_df)
-
-    async def test_get_history_not_existing_city(self, client):
-        report_df = create_random_report()
-        files = mock_csv_file(report_df)
-        await client.post(f"{settings.BASE_APP_DIR}/air_quality/upload", files=files)
-
-        random_string = _get_random_string(15)
-        response = await client.get(self.url + f"?city_name={random_string}")
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        if not isinstance(response.json(), dict):
+            response_df = pd.DataFrame(response.json())
+            print("response:\n", response_df)
+            assert test_output.response_df.equals(response_df)
