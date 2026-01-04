@@ -1,14 +1,17 @@
-from db.database import Database
-from settings import settings
+from db.pgDatabase import PGDatabase
+from settings import Settings
 
 import pytest
 from httpx import AsyncClient, ASGITransport
 from app.main import create_app
 
 
+settings = Settings(SCHEME="mock_rolling_exercise")
+
+
 @pytest.fixture(scope="function")
 async def test_db():
-    db = Database(db_url=settings.DB_URL, scheme=settings.MOCK_SCHEME)
+    db = PGDatabase(db_url=settings.DB_URL, scheme=settings.SCHEME)
 
     await db.create_tables()
     await db.reset_tables(drop_previous=True)
