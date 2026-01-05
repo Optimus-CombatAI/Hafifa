@@ -22,7 +22,7 @@ class TestUploadFile:
         ],
         ids=["valid_input", "invalid_dates", "missing_data"],
     )
-    async def test_upload_file(self, client: AsyncClient, report_df: pd.DataFrame, expected_status: int):
+    async def test_upload_file(self, client: AsyncClient, report_df: pd.DataFrame, expected_status: int) -> None:
         files = mock_csv_file(report_df)
 
         response = await client.post(self.url, files=files)

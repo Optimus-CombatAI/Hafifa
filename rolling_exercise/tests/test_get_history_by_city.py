@@ -23,7 +23,7 @@ class TestGetHistoryByCity:
         ],
         ids=["random_city", "not_existing_city"],
     )
-    async def test_get_history_by_city(self, test_db: PGDatabase, client: AsyncClient, test_input: TestHistoryInput, test_output: TestHistoryOutput):
+    async def test_get_history_by_city(self, test_db: PGDatabase, client: AsyncClient, test_input: TestHistoryInput, test_output: TestHistoryOutput) -> None:
         report_df = test_input.report_df
         await insert_data_manually(test_db, report_df)
 

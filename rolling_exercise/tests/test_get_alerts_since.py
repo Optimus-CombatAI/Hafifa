@@ -22,7 +22,7 @@ class TestGetAlertsSince:
         ],
         ids=["random_input", "min_date", "max_date", "invalid_date"],
     )
-    async def test_get_alerts_since(self, test_db: PGDatabase, client: AsyncClient, test_input: TestAlertsInput, test_output: TestAlertsOutput):
+    async def test_get_alerts_since(self, test_db: PGDatabase, client: AsyncClient, test_input: TestAlertsInput, test_output: TestAlertsOutput) -> None:
         report_df = test_input.report_df
         await insert_data_manually(test_db, report_df)
 
