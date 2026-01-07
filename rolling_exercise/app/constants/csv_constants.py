@@ -1,0 +1,22 @@
+CSV_ENCODING = "utf-8"
+CSV_DATE_COL = "date"
+CSV_CITY_COL = "city"
+CSV_PM25_COL = "PM2.5"
+CSV_NO2_COL = "NO2"
+CSV_CO2_COL = "CO2"
+
+REQUIRED_CSV_COLUMNS = {
+    CSV_DATE_COL,
+    CSV_CITY_COL,
+    CSV_PM25_COL,
+    CSV_NO2_COL,
+    CSV_CO2_COL,
+}
+
+CSV_TO_INTERNAL_FIELDS = {
+    CSV_PM25_COL: "pm25",
+    CSV_NO2_COL: "no2",
+    CSV_CO2_COL: "co2",
+}
+
+CSV_MISSING_COLUMNS_ERROR = "CSV file is missing required columns"
