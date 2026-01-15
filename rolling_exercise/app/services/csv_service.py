@@ -1,6 +1,7 @@
-import csv
-import io
-from datetime import date as DateType
+from __future__ import annotations
+
+from io import BytesIO
+import pandas as pd
 
 from app.constants.csv_constants import (
     CSV_ENCODING,
@@ -12,29 +13,34 @@ from app.constants.csv_constants import (
     REQUIRED_CSV_COLUMNS,
     CSV_MISSING_COLUMNS_ERROR,
 )
+from app.schemas.air_quality import AirQualityRow
 
 
-def parse_air_quality_csv(file_content: bytes) -> list[dict]:
-    text = file_content.decode(CSV_ENCODING)
-    reader = csv.DictReader(io.StringIO(text))#transforms each line into a dictionary
-    fieldnames = set(reader.fieldnames or [])
-    if not REQUIRED_CSV_COLUMNS.issubset(fieldnames):
+def parse_air_quality_csv(file_content: bytes) -> list[AirQualityRow]:
+
+    df = pd.read_csv(BytesIO(file_content), encoding=CSV_ENCODING)
+    if not REQUIRED_CSV_COLUMNS.issubset(df.columns):
         raise ValueError(CSV_MISSING_COLUMNS_ERROR)
 
-    rows: list[dict] = []
+    df = df[[CSV_DATE_COL, CSV_CITY_COL, CSV_PM25_COL, CSV_NO2_COL, CSV_CO2_COL]].copy()
+    df[CSV_CITY_COL] = df[CSV_CITY_COL].astype(str).str.strip()
+    df[CSV_DATE_COL] = pd.to_datetime(df[CSV_DATE_COL], errors="coerce").dt.date # if invalid ->Nat
 
-    for row in reader:
-        try:
-            parsed_row = {
-                "date": DateType.fromisoformat(row[CSV_DATE_COL]),
-                "city": row[CSV_CITY_COL].strip(),
-                "pm25": float(row[CSV_PM25_COL]),
-                "no2": float(row[CSV_NO2_COL]),
-                "co2": float(row[CSV_CO2_COL]),
-            }
-            rows.append(parsed_row)
+    for col in (CSV_PM25_COL, CSV_NO2_COL, CSV_CO2_COL):
+        df[col] = pd.to_numeric(df[col], errors="coerce")
 
-        except (ValueError, TypeError, KeyError):
-            continue
+    df = df.dropna(subset=[CSV_DATE_COL, CSV_CITY_COL, CSV_PM25_COL, CSV_NO2_COL, CSV_CO2_COL])
+
+    rows: list[AirQualityRow] = []
+    for record in df.to_dict(orient="records"):
+        rows.append(
+            AirQualityRow(
+                date=record[CSV_DATE_COL],
+                city=record[CSV_CITY_COL],
+                pm25=float(record[CSV_PM25_COL]),
+                no2=float(record[CSV_NO2_COL]),
+                co2=float(record[CSV_CO2_COL]),
+            )
+        )
 
     return rows
