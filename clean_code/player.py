@@ -8,7 +8,7 @@ import pygame
 from mutagen.easyid3 import EasyID3
 from mutagen.id3 import ID3NoHeaderError
 
-# MP3 music-player
+# MP3 music-player program
 
 # -------------------- Configuration --------------------
 
