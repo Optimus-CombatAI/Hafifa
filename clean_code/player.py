@@ -12,32 +12,50 @@ from mutagen.id3 import ID3NoHeaderError
 
 # -------------------- Configuration --------------------
 
+SONG_END_CHECK_INTERVAL_MS = 100
+
+PLAYLIST_TEXT_WIDTH = 60
+PLAYLIST_TEXT_HEIGHT = 10
+PLAYLIST_TEXT_WRAP = tk.WORD
+
+BUTTON_BG = "AntiqueWhite1"
+BUTTON_WIDTH = 40
+BUTTON_PADY = 2
+
+DEFAULT_ROW = 0
+DEFAULT_COLUMN = 0
+DEFAULT_PADY = 2
+
+DEFAULT_TITLE = "MP3 Music Player"
+DEFAULT_GEOMETRY = "500x500"
+
+DEFAULT_LAYOUT_WIDGETS_PADY = 10
+
 @dataclass 
 class AppConfig:
-    title: str = "MP3 Music Player"
-    geometry: str = "500x500"
+    title: str = DEFAULT_TITLE
+    geometry: str = DEFAULT_GEOMETRY
 
-# Button configuration, implemented default values from the original file
 @dataclass
 class ButtonConfig:
-    text: str
-    command: Callable[[], None] # Functionality
-    bg: str = "AntiqueWhite1"
-    width: int = 40
-    row: int = 0
-    column: int = 0
-    pady: int = 2
+    button_display: str
+    button_functionality: Callable[[], None] 
+    bg: str = BUTTON_BG
+    width: int = BUTTON_WIDTH
+    row: int = DEFAULT_ROW
+    column: int = DEFAULT_COLUMN
+    pady: int = DEFAULT_PADY
 
 
 @dataclass
 class SongData:
-    path: str # File path locally
+    local_song_path: str 
     title: str = "Unknown title"
     artist: str = "Unknown artist"
 
     def __post_init__(self):
         try:
-            metadata = EasyID3(self.path)
+            metadata = EasyID3(self.local_song_path)
         except ID3NoHeaderError:
             return
 
@@ -45,7 +63,7 @@ class SongData:
         self.artist = metadata.get("artist", [self.artist])[0]
 
     def __str__(self):
-        return f"{self.title} - {self.artist}" # Kept the str view from original file
+        return f"{self.title} - {self.artist}" 
 
 
 # -------------------- Playlist --------------------
@@ -53,11 +71,11 @@ class SongData:
 class PlaylistManager:
     def __init__(self, parent):
         self.songs = []
-        self.text = tk.Text(
+        self.playlist_display = tk.Text(
             parent,
-            width=60,
-            height=10,
-            wrap=tk.WORD
+            width=PLAYLIST_TEXT_WIDTH,
+            height=PLAYLIST_TEXT_HEIGHT,
+            wrap=PLAYLIST_TEXT_WRAP
         )
 
     def add_songs(self):
@@ -72,7 +90,7 @@ class PlaylistManager:
             except (OSError, ValueError):
                 continue
 
-        self.refresh()
+        self.update_displayed_playlist()
 
     # Displays the playlist in the following format: (e.g)
     # 1. Title - Artist
@@ -80,25 +98,23 @@ class PlaylistManager:
     # ...
     def displayList(self):
         for number, song in enumerate(self.songs, start=1):
-            self.text.insert(tk.END, f"{number}. {song}\n")
+            self.playlist_display.insert(tk.END, f"{number}. {song}\n")
 
-    # Updates the playlist displayed in the Tkinter text box
-    def refresh(self):
-        self.text.delete("1.0", tk.END)
+    def update_displayed_playlist(self):
+        self.playlist_display.delete("1.0", tk.END)
         self.displayList()
         
 
 
 # -------------------- Music Player --------------------
 
-# Handles playing, pausing and other functionalities of a music-player
 class MusicPlayer:
     def __init__(self, playlist):
-        self.playlist = playlist # Playlist object
-        self.song_index = 0 # The index of the currently selected song
-        self.paused = False # Tracks whether playback is paused. Initially, it is not paused.
-        self.auto_play = True # Determines whether the player automatically advances to the next song when the current song ends
-        self.on_song_change = None # A placeholder for a function to call when the playing song changes. Initially, no function is assigned.
+        self.playlist = playlist 
+        self.current_song_index = 0 
+        self.playlist_paused = False 
+        self.auto_play = True
+        self.on_song_change = None 
 
         self.song_end = pygame.USEREVENT + 1
         pygame.mixer.music.set_endevent(self.song_end)
@@ -107,74 +123,79 @@ class MusicPlayer:
         if not self.playlist.songs:
             return
 
-        song = self.playlist.songs[self.song_index]
-        pygame.mixer.music.load(song.path)
+        song = self.playlist.songs[self.current_song_index]
+        pygame.mixer.music.load(song.local_song_path)
         pygame.mixer.music.play()
-        self.paused = False
+        self.playlist_paused = False
         self._notify_song_change()
 
     def toggle_pause(self):
         if not self.playlist.songs:
             return
 
-        if self.paused:
+        if self.playlist_paused:
             pygame.mixer.music.unpause()
         else:
             pygame.mixer.music.pause()
 
-        self.paused = not self.paused
+        self.playlist_paused = not self.playlist_paused
 
     def next(self):
         if not self.playlist.songs:
             return
 
-        self.song_index = (self.song_index + 1) % len(self.playlist.songs)
+        self.current_song_index = (self.current_song_index + 1) % len(self.playlist.songs)
         self.play()
 
     def previous(self):
         if not self.playlist.songs:
             return
 
-        self.song_index = (self.song_index - 1) % len(self.playlist.songs)
+        self.current_song_index = (self.current_song_index - 1) % len(self.playlist.songs)
         self.play()
 
     def toggle_auto_play(self):
         self.auto_play = not self.auto_play
 
-    # Notify another component that the currently playing song has changed
+    
     def _notify_song_change(self):
         if self.on_song_change:
             self.on_song_change()
 
-    # Check if the current song has ended and automatic playback is enabled.
-    # If so, play the next song
+    def is_auto_play_enabled(self):
+        return self.auto_play
+
+    def play_next_song(self):
+        if self.is_auto_play_enabled():
+            self.next()
+            self._notify_song_change()
+    
     def check_song_ended(self, root):
         for event in pygame.event.get():
-            if event.type == self.song_end and self.auto_play:
-                self.next()
+            if event.type == self.song_end:
+                self.play_next_song()
 
-        # schedules the check every 100 milliseconds
-        root.after(100, lambda: self.check_song_ended(root))
+        self.schedule_song_end_check(root)
+        
+    def schedule_song_end_check(self, root):
+        root.after(SONG_END_CHECK_INTERVAL_MS, lambda: self.check_song_ended(root))
 
 
 # -------------------- Main Frame --------------------
 
-# Build the (GUI) and connect its widgets to the playlist and music player
-class FrameApp(tk.Frame):
+class GUI_Handler(tk.Frame):
     def __init__(self, root):
         super().__init__(root)
         self.grid()
 
         self.create_components()
-        self.create_buttons()
-        self.layout_widgets()
+        self.create_buttons_from_configs()
+        self.layout_widgets_below_buttons()
 
-        # Setting the "update_status" func to happen on song change
-        self.player.on_song_change = self.update_status
+        self.player.on_song_change = self.update_current_song_display
         self.player.check_song_ended(root)
 
     def no_song_playing_display(self):
-        # creates a label that initially displays "No song playing"
         self.status = tk.Label(
             self,
             text="No song playing",
@@ -184,56 +205,53 @@ class FrameApp(tk.Frame):
         )
         
     
-    # Creates the main objects and widgets used by the GUI
     def create_components(self):
         self.playlist = PlaylistManager(self)
         self.player = MusicPlayer(self.playlist)
         self.no_song_playing_display()
 
-    # Defines the configuration for each button and returns a list of ButtonConfig objects
     def create_button_configs(self):
         return [
             ButtonConfig(
-                text="ADD TO LIST",
-                command=self.playlist.add_songs,
+                button_display="ADD TO LIST",
+                button_functionality=self.playlist.add_songs,
                 row=0,
                 column=0
             ),
             ButtonConfig(
-                text="PLAY SONG",
-                command=self.player.play,
+                button_display="PLAY SONG",
+                button_functionality=self.player.play,
                 row=1,
                 column=0
             ),
             ButtonConfig(
-                text="PREVIOUS SONG",
-                command=self.player.previous,
+                button_display="PREVIOUS SONG",
+                button_functionality=self.player.previous,
                 row=2,
                 column=0
             ),
             ButtonConfig(
-                text="PAUSE/UNPAUSE",
-                command=self.player.toggle_pause,
+                button_display="PAUSE/UNPAUSE",
+                button_functionality=self.player.toggle_pause,
                 row=3,
                 column=0
             ),
             ButtonConfig(
-                text="NEXT SONG",
-                command=self.player.next,
+                button_display="NEXT SONG",
+                button_functionality=self.player.next,
                 row=4,
                 column=0
             ),
         ]
 
-    # Creates the actual Tkinter buttons using the configurations returned by create_button_configs()
-    def create_buttons(self):
+    def create_buttons_from_configs(self):
         self.button_configs = self.create_button_configs()
 
         for config in self.button_configs:
             tk.Button(
                 self,
-                text=config.text,
-                command=config.command,
+                text=config.button_display,
+                command=config.button_functionality,
                 bg=config.bg,
                 width=config.width
             ).grid(
@@ -242,29 +260,26 @@ class FrameApp(tk.Frame):
                 pady=config.pady
             )
 
-    # Positions the status label and playlist text box beneath the buttons
-    def layout_widgets(self):
+    def layout_widgets_below_buttons(self):
         status_row = max(
             (button.row for button in self.button_configs),
             default=-1
         ) + 1
 
-        self.status.grid(row=status_row, column=0, pady=10)
-        self.playlist.text.grid(
+        self.status.grid(row=status_row, column=DEFAULT_COLUMN, pady=DEFAULT_LAYOUT_WIDGETS_PADY)
+        self.playlist.playlist_display.grid(
             row=status_row + 1,
-            column=0,
-            pady=10
+            column=DEFAULT_COLUMN,
+            pady=DEFAULT_LAYOUT_WIDGETS_PADY
         )
 
-    # Updates the status label to show the currently playing song
-    def update_status(self):
-        song = self.playlist.songs[self.player.song_index]
+    def update_current_song_display(self):
+        song = self.playlist.songs[self.player.current_song_index]
         self.status.config(text=f"Now playing: {song}")
 
 
 # -------------------- Application Window --------------------
 
-# initialize, launch, and shut down the application
 class MusicPlayerApp:
     def __init__(self, config=None):
         pygame.init()
@@ -274,7 +289,7 @@ class MusicPlayerApp:
         self.root.title(self.config.title)
         self.root.geometry(self.config.geometry)
 
-        self.frame = FrameApp(self.root)
+        self.frame = GUI_Handler(self.root)
         self.root.protocol("WM_DELETE_WINDOW", self.close)
 
     def run(self):
