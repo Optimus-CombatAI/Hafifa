@@ -23,3 +23,24 @@ In the first part, we focused only on Bitcoin. Now, adapt your existing code to 
 - **Bitcoin**: `BITCOIN_DATES` (file: `bitcoin_dates.txt`)
 
 ## Good Luck! (:
+
+---
+
+## This implementation
+
+One file: `main.py`. Uses `ThreadPoolExecutor` for parallel Yahoo fetches (one thread per stock).
+
+```bash
+cd threading_multiprocessing
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python main.py
+```
+
+Configure via `.env`. Paths are relative to this folder.
+
+- Part 1: `DESTINATION_FILE`, `BITCOIN_DATES`
+- Part 2: also `GOOGLE_DATES`, `AMAZON_DATES` (unset date vars are skipped)
+
+Hours with no matching bar (or no previous bar) are omitted. Yahoo `1h` history is usually limited to ~730 days—timestamps outside that window often produce an empty CSV.
