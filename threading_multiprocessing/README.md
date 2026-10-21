@@ -29,6 +29,7 @@ In the first part, we focused only on Bitcoin. Now, adapt your existing code to 
 ## This implementation
 
 - `constants.py` — tickers, env var names, CSV columns
+- `logging_config.py` — stderr logging (`LOG_LEVEL`, default `INFO`; quiets yfinance)
 - `stock_prices.py` — Yahoo fetch and hour-over-hour % change
 - `main.py` — env/config, `ThreadPoolExecutor` (one thread per stock), CSV output
 

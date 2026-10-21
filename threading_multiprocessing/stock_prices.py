@@ -1,9 +1,13 @@
 """Yahoo hourly history and hour-over-hour percentage change."""
 
+import logging
+
 import pandas as pd
 import yfinance as yf
 
 from constants import COLUMNS, FETCH_PADDING
+
+logger = logging.getLogger(__name__)
 
 
 def hourly_closes(hist: pd.DataFrame) -> pd.Series:
@@ -57,20 +61,53 @@ def percentage_changes(
 def process_stock(stock_type: str, ticker: str, hours: list[str]) -> pd.DataFrame:
     """One Yahoo fetch for the span of ``hours``, then vectorized % changes."""
     if not hours:
+        logger.warning("%s (%s): hour list is empty", stock_type, ticker)
         return pd.DataFrame(columns=list(COLUMNS))
 
     bars = pd.to_datetime(hours, errors="coerce").floor("h")
     valid_bars = bars.dropna()
+    dropped = len(hours) - len(valid_bars)
+    if dropped:
+        logger.debug("%s (%s): skipped %d unparsable hour lines", stock_type, ticker, dropped)
     if valid_bars.empty:
+        logger.warning("%s (%s): no valid timestamps in hour file", stock_type, ticker)
         return pd.DataFrame(columns=list(COLUMNS))
 
     start = (valid_bars.min() - FETCH_PADDING).strftime("%Y-%m-%d")
     # Extra day: Yahoo ``end`` is exclusive when passed as a date.
     end = (valid_bars.max() + FETCH_PADDING + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+    logger.debug("%s (%s): fetching 1h history %s to %s", stock_type, ticker, start, end)
 
-    hist = yf.Ticker(ticker).history(start=start, end=end, interval="1h")
-    closes = hourly_closes(hist)
-    if closes.empty:
+    try:
+        hist = yf.Ticker(ticker).history(start=start, end=end, interval="1h")
+    except Exception:
+        logger.exception("%s (%s): Yahoo fetch failed", stock_type, ticker)
         return pd.DataFrame(columns=list(COLUMNS))
 
-    return percentage_changes(closes, hours, stock_type)
+    closes = hourly_closes(hist)
+    if closes.empty:
+        logger.warning(
+            "%s (%s): no hourly closes returned for %s–%s",
+            stock_type,
+            ticker,
+            start,
+            end,
+        )
+        return pd.DataFrame(columns=list(COLUMNS))
+
+    frame = percentage_changes(closes, hours, stock_type)
+    if frame.empty:
+        logger.warning(
+            "%s (%s): no hour-over-hour rows matched requested timestamps",
+            stock_type,
+            ticker,
+        )
+    else:
+        logger.info(
+            "%s (%s): %d rows from %d requested hours",
+            stock_type,
+            ticker,
+            len(frame),
+            len(hours),
+        )
+    return frame

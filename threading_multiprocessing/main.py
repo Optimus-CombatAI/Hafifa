@@ -9,7 +9,10 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from constants import COLUMNS, PACKAGE_DIR, STOCKS
+from logging_config import configure_logging
 from stock_prices import process_stock
+
+logger = logging.getLogger(__name__)
 
 
 def resolve_path(value: str) -> Path:
@@ -25,7 +28,7 @@ def load_hours(path: Path) -> list[str]:
 
 def main() -> None:
     load_dotenv(PACKAGE_DIR / ".env")
-    logging.getLogger("yfinance").setLevel(logging.CRITICAL)
+    configure_logging()
 
     destination = os.environ.get("DESTINATION_FILE")
     if not destination:
@@ -35,12 +38,16 @@ def main() -> None:
     for name, ticker, dates_env in STOCKS:
         dates_path = os.environ.get(dates_env)
         if dates_path:
-            tasks.append((name, ticker, load_hours(resolve_path(dates_path))))
+            path = resolve_path(dates_path)
+            hours = load_hours(path)
+            tasks.append((name, ticker, hours))
+            logger.info("Loaded %d hours for %s from %s", len(hours), name, path)
 
     if not tasks:
         needed = ", ".join(env for _, _, env in STOCKS)
         raise SystemExit(f"No hour files configured. Set one or more of: {needed}")
 
+    logger.info("Fetching %d stock(s) with ThreadPoolExecutor", len(tasks))
     names, tickers, hours_lists = zip(*tasks)
     with ThreadPoolExecutor(max_workers=len(tasks)) as executor:
         parts = list(executor.map(process_stock, names, tickers, hours_lists))
@@ -53,9 +60,11 @@ def main() -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     frame.to_csv(output_path, index=False, columns=list(COLUMNS))
 
-    print(f"Wrote {output_path} ({len(frame)} rows, {len(tasks)} stocks)")
+    logger.info("Wrote %s (%d rows, %d stocks)", output_path, len(frame), len(tasks))
     if frame.empty:
-        print("No rows written; Yahoo 1h history is usually limited to ~730 days.")
+        logger.warning(
+            "No rows written; Yahoo 1h history is usually limited to ~730 days."
+        )
 
 
 if __name__ == "__main__":
