@@ -28,7 +28,9 @@ In the first part, we focused only on Bitcoin. Now, adapt your existing code to 
 
 ## This implementation
 
-One file: `main.py`. Uses `ThreadPoolExecutor` for parallel Yahoo fetches (one thread per stock).
+- `constants.py` — tickers, env var names, CSV columns
+- `stock_prices.py` — Yahoo fetch and hour-over-hour % change
+- `main.py` — env/config, `ThreadPoolExecutor` (one thread per stock), CSV output
 
 ```bash
 cd threading_multiprocessing
