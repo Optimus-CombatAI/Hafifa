@@ -1,8 +1,8 @@
-from app import MusicPlayerApp
-from logging_config import configure_logging
+from App.app import MusicPlayerApp
+from config.logging_config import configure_logging
 
 
-def main():
+def main() -> None:
     configure_logging()
 
     app = MusicPlayerApp()

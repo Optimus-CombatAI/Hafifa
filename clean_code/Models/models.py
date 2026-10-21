@@ -4,13 +4,7 @@ from dataclasses import dataclass
 from mutagen.easyid3 import EasyID3
 from mutagen.id3 import ID3NoHeaderError
 
-from config import (
-    BUTTON_BG,
-    BUTTON_PADY,
-    BUTTON_WIDTH,
-    LAYOUT_START_COLUMN,
-    LAYOUT_START_ROW,
-)
+from config.settings import settings
 
 
 @dataclass
@@ -19,16 +13,18 @@ class SongData:
     title: str = "Unknown title"
     artist: str = "Unknown artist"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         try:
             metadata = EasyID3(self.local_song_path)
         except (ID3NoHeaderError, OSError, ValueError):
+            
             return
 
         self.title = metadata.get("title", [self.title])[0]
         self.artist = metadata.get("artist", [self.artist])[0]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        
         return f"{self.title} - {self.artist}"
 
 
@@ -36,8 +32,8 @@ class SongData:
 class ButtonConfig:
     text_display: str
     functionality: Callable[[], None]
-    bg: str = BUTTON_BG
-    width: int = BUTTON_WIDTH
-    row: int = LAYOUT_START_ROW
-    column: int = LAYOUT_START_COLUMN
-    pady: int = BUTTON_PADY
+    bg: str = settings.BUTTON_BG
+    width: int = settings.BUTTON_WIDTH
+    row: int = settings.LAYOUT_START_ROW
+    column: int = settings.LAYOUT_START_COLUMN
+    pady: int = settings.BUTTON_PADY

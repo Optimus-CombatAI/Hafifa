@@ -1,21 +1,16 @@
 import tkinter as tk
+from collections.abc import Callable
 
-from config import (
-    LAYOUT_START_COLUMN,
-    LAYOUT_START_ROW,
-    LAYOUT_WIDGETS_PADY,
-    PLAYLIST_TEXT_HEIGHT,
-    PLAYLIST_TEXT_WIDTH,
-)
-from models import ButtonConfig
-from player import MusicPlayer
-from playlist import PlaylistManager
+from BusinessLogic.player import MusicPlayer
+from config.settings import settings
+from Data.playlist import PlaylistManager
+from Models.models import ButtonConfig, SongData
 
 
 class GUIHandler:
-    def __init__(self, root):
-        self.root = root
-        self.buttons = []
+    def __init__(self, root: tk.Tk) -> None:
+        self.root: tk.Tk = root
+        self.buttons: list[tuple[tk.Button, ButtonConfig]] = []
 
         self.create_playlist_manager()
         self.create_music_player()
@@ -25,33 +20,34 @@ class GUIHandler:
         self.player.on_song_change = self.update_current_song_display
         self.player.schedule_song_end_check(root)
 
-    def create_playlist_manager(self):
+    def create_playlist_manager(self) -> None:
         self.playlist = PlaylistManager()
 
-    def create_music_player(self):
+    def create_music_player(self) -> None:
         self.player = MusicPlayer(self.playlist)
 
-    def create_components(self):
+    def create_components(self) -> None:
         self.create_playlist_display()
         self.create_status_label()
         self.create_buttons()
 
-    def create_playlist_display(self):
+    def create_playlist_display(self) -> None:
         self.playlist_display = tk.Text(
             self.root,
-            width=PLAYLIST_TEXT_WIDTH,
-            height=PLAYLIST_TEXT_HEIGHT,
+            width=settings.PLAYLIST_TEXT_WIDTH,
+            height=settings.PLAYLIST_TEXT_HEIGHT,
             wrap=tk.WORD,
         )
         self.playlist.playlist_display = self.playlist_display
 
-    def create_status_label(self):
+    def create_status_label(self) -> None:
         self.status_label = tk.Label(
             self.root,
             text="No song playing",
         )
 
-    def create_button_configs(self):
+    def create_button_configs(self) -> list[ButtonConfig]:
+        
         return [
             ButtonConfig("ADD TO LIST", self.playlist.add_songs),
             ButtonConfig("PLAY SONG", self.player.play),
@@ -61,7 +57,7 @@ class GUIHandler:
             ButtonConfig("AUTO PLAY: ON", self.toggle_auto_play),
         ]
 
-    def create_buttons(self):
+    def create_buttons(self) -> None:
         self.buttons = []
 
         for config in self.create_button_configs():
@@ -74,58 +70,64 @@ class GUIHandler:
             )
             self.buttons.append((button, config))
 
-    def arrange_components(self):
-        current_row = LAYOUT_START_ROW
+    def arrange_components(self) -> None:
+        current_row = settings.LAYOUT_START_ROW
 
         current_row = self.arrange_buttons(current_row)
         current_row = self.arrange_status_label(current_row)
         self.arrange_playlist_display(current_row)
 
-    def arrange_buttons(self, row):
+    def arrange_buttons(self, row: int) -> int:
         current_row = row
 
         for button, config in self.buttons:
             button.grid(
                 row=current_row,
-                column=LAYOUT_START_COLUMN + config.column,
+                column=settings.LAYOUT_START_COLUMN + config.column,
                 pady=config.pady,
             )
             current_row += 1
 
         return current_row
 
-    def arrange_status_label(self, row):
+    def arrange_status_label(self, row: int) -> int:
         self.status_label.grid(
             row=row,
-            column=LAYOUT_START_COLUMN,
-            pady=LAYOUT_WIDGETS_PADY,
+            column=settings.LAYOUT_START_COLUMN,
+            pady=settings.LAYOUT_WIDGETS_PADY,
         )
 
         return row + 1
 
-    def arrange_playlist_display(self, row):
+    def arrange_playlist_display(self, row: int) -> None:
         self.playlist_display.grid(
             row=row,
-            column=LAYOUT_START_COLUMN,
-            pady=LAYOUT_WIDGETS_PADY,
+            column=settings.LAYOUT_START_COLUMN,
+            pady=settings.LAYOUT_WIDGETS_PADY,
         )
 
-    def update_current_song_display(self, song):
+    def update_current_song_display(self, song: SongData) -> None:
         self.status_label.config(text=str(song))
 
-    def toggle_auto_play(self):
+    def toggle_auto_play(self) -> None:
         self.player.toggle_auto_play()
         self.update_auto_play_button()
 
-    def update_auto_play_button(self):
+    def update_auto_play_button(self) -> None:
         state = "ON" if self.player.auto_play else "OFF"
 
         button = self.get_button_by_functionality(self.toggle_auto_play)
         button.config(text=f"AUTO PLAY: {state}")
 
-    def get_button_by_functionality(self, functionality):
+    def get_button_by_functionality(
+        self,
+        functionality: Callable[[], None],
+    ) -> tk.Button:
         for button, config in self.buttons:
             if config.functionality == functionality:
+                
                 return button
 
-        raise ValueError(f"No button found for functionality: {functionality.__name__}")
+        raise ValueError(
+            f"No button found for functionality: {functionality.__name__}"
+        )
