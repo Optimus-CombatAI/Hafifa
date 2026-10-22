@@ -24,7 +24,6 @@ class SongData:
         self.artist = metadata.get("artist", [self.artist])[0]
 
     def __str__(self) -> str:
-        
         return f"{self.title} - {self.artist}"
 
 

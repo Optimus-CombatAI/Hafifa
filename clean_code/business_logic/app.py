@@ -4,7 +4,7 @@ import tkinter as tk
 import pygame
 
 from config.settings import settings
-from Gui.gui import GUIHandler
+from gui.gui import GUIHandler
 
 logger = logging.getLogger(__name__)
 

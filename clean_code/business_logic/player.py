@@ -3,9 +3,9 @@ from collections.abc import Callable
 
 import pygame
 
+from business_logic.playlist import PlaylistManager
 from config.settings import settings
-from Data.playlist import PlaylistManager
-from Models.models import SongData
+from models.models import SongData
 
 
 class MusicPlayer:

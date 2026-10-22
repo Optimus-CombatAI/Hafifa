@@ -1,4 +1,4 @@
-from App.app import MusicPlayerApp
+from business_logic.app import MusicPlayerApp
 from config.logging_config import configure_logging
 
 

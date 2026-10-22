@@ -3,7 +3,7 @@ import tkinter as tk
 from collections.abc import Sequence
 from tkinter import filedialog
 
-from Models.models import SongData
+from models.models import SongData
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,6 @@ class PlaylistManager:
         self.log_added_songs(added_count)
 
     def select_song_paths(self) -> tuple[str, ...]:
-        
         return filedialog.askopenfilenames(
             title="Select MP3 files",
             filetypes=[("MP3 files", "*.mp3")],
@@ -40,7 +39,7 @@ class PlaylistManager:
         try:
             song = SongData(path)
         except (OSError, ValueError) as error:
-            logger.warning("Could not load song %s: %s", path, error)
+            logger.error(f"Could not load song {path}: {error}")
             
             return False
 
@@ -50,7 +49,7 @@ class PlaylistManager:
 
     def log_added_songs(self, added_count: int) -> None:
         if added_count:
-            logger.info("Added %d song(s) to playlist", added_count)
+            logger.info(f"Added {added_count} song(s) to playlist.")
 
     def display_list(self) -> None:
         for number, song in enumerate(self.songs, start=1):

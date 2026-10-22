@@ -1,10 +1,10 @@
 import tkinter as tk
 from collections.abc import Callable
 
-from BusinessLogic.player import MusicPlayer
+from business_logic.player import MusicPlayer
+from business_logic.playlist import PlaylistManager
 from config.settings import settings
-from Data.playlist import PlaylistManager
-from Models.models import ButtonConfig, SongData
+from models.models import ButtonConfig, SongData
 
 
 class GUIHandler:
@@ -47,7 +47,6 @@ class GUIHandler:
         )
 
     def create_button_configs(self) -> list[ButtonConfig]:
-        
         return [
             ButtonConfig("ADD TO LIST", self.playlist.add_songs),
             ButtonConfig("PLAY SONG", self.player.play),
