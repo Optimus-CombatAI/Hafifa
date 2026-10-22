@@ -1,113 +1,94 @@
 """Yahoo hourly history and hour-over-hour percentage change."""
 
 import logging
+from collections.abc import Sequence
 
 import pandas as pd
 import yfinance as yf
 
-from constants import COLUMNS, FETCH_PADDING
+from constant import COLUMNS, FETCH_PADDING
+from models import StockTask
 
 logger = logging.getLogger(__name__)
 
 
-def hourly_closes(hist: pd.DataFrame) -> pd.Series:
+def empty_result() -> pd.DataFrame:
+    return pd.DataFrame(columns=list(COLUMNS))
+
+
+def parse_hours(raw_hours: Sequence[str]) -> pd.DataFrame:
+    """Raw ``hour`` strings with their floored ``bar``; unparsable lines are dropped."""
+    requested = pd.DataFrame({"hour": list(raw_hours)})
+    requested["bar"] = pd.to_datetime(requested["hour"], errors="coerce").dt.floor("h")
+    return requested.dropna(subset=["bar"])
+
+
+def hourly_closes(history: pd.DataFrame) -> pd.Series:
     """Last close per UTC hour."""
-    if hist.empty:
+    if history.empty:
         return pd.Series(dtype=float)
 
-    index = hist.index
+    index = history.index
     if index.tz is not None:
         index = index.tz_convert("UTC").tz_localize(None)
+    return history["Close"].groupby(index.floor("h")).last()
 
-    closes = hist["Close"].copy()
-    closes.index = index.floor("h")
-    return closes.groupby(closes.index).last()
+
+def fetch_hourly_closes(ticker: str, bars: pd.Series) -> pd.Series:
+    """One Yahoo request covering every bar in ``bars``, padded on both sides."""
+    start = (bars.min() - FETCH_PADDING).strftime("%Y-%m-%d")
+    # Yahoo's ``end`` is exclusive when passed as a date.
+    end = (bars.max() + FETCH_PADDING + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+    logger.debug("%s: fetching 1h history %s to %s", ticker, start, end)
+    history = yf.Ticker(ticker).history(start=start, end=end, interval="1h")
+    return hourly_closes(history)
 
 
 def percentage_changes(
-    closes: pd.Series, raw_hours: list[str], stock_type: str
+    closes: pd.Series, requested: pd.DataFrame, stock_type: str
 ) -> pd.DataFrame:
-    """Hour-over-hour % change for requested timestamps (vectorized lookups).
+    """Hour-over-hour % change for each requested bar.
 
     Uses calendar ``t`` and ``t - 1h`` labels, not ``Series.shift()``, so gaps
     in Yahoo's hourly index do not pair the wrong bars.
     """
-    requested = pd.DataFrame({"hour": raw_hours})
-    requested["bar"] = pd.to_datetime(requested["hour"], errors="coerce").dt.floor("h")
-    requested = requested.dropna(subset=["bar"])
-    if requested.empty:
-        return pd.DataFrame(columns=list(COLUMNS))
-
-    requested["prev_bar"] = requested["bar"] - pd.Timedelta(hours=1)
-    requested["curr_close"] = requested["bar"].map(closes)
-    requested["prev_close"] = requested["prev_bar"].map(closes)
-
-    ok = (
-        requested["curr_close"].notna()
-        & requested["prev_close"].notna()
-        & (requested["prev_close"] != 0)
-    )
-    pct = (requested.loc[ok, "curr_close"] / requested.loc[ok, "prev_close"] - 1) * 100
+    current = requested["bar"].map(closes)
+    previous = (requested["bar"] - pd.Timedelta(hours=1)).map(closes)
+    ok = current.notna() & previous.notna() & (previous != 0)
 
     return pd.DataFrame(
         {
             "hour": requested.loc[ok, "hour"].to_numpy(),
             "stock type": stock_type,
-            "percentage change": pct.to_numpy(),
+            "percentage change": ((current[ok] / previous[ok] - 1) * 100).to_numpy(),
         }
     )
 
 
-def process_stock(stock_type: str, ticker: str, hours: list[str]) -> pd.DataFrame:
-    """One Yahoo fetch for the span of ``hours``, then vectorized % changes."""
-    if not hours:
-        logger.warning("%s (%s): hour list is empty", stock_type, ticker)
-        return pd.DataFrame(columns=list(COLUMNS))
-
-    bars = pd.to_datetime(hours, errors="coerce").floor("h")
-    valid_bars = bars.dropna()
-    dropped = len(hours) - len(valid_bars)
-    if dropped:
-        logger.debug("%s (%s): skipped %d unparsable hour lines", stock_type, ticker, dropped)
-    if valid_bars.empty:
-        logger.warning("%s (%s): no valid timestamps in hour file", stock_type, ticker)
-        return pd.DataFrame(columns=list(COLUMNS))
-
-    start = (valid_bars.min() - FETCH_PADDING).strftime("%Y-%m-%d")
-    # Extra day: Yahoo ``end`` is exclusive when passed as a date.
-    end = (valid_bars.max() + FETCH_PADDING + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
-    logger.debug("%s (%s): fetching 1h history %s to %s", stock_type, ticker, start, end)
+def process_stock(task: StockTask) -> pd.DataFrame:
+    """Fetch one stock's history and compute % changes for its requested hours."""
+    requested = parse_hours(task.hours)
+    skipped = len(task.hours) - len(requested)
+    if skipped:
+        logger.debug("%s: skipped %d unparsable hour lines", task.label, skipped)
+    if requested.empty:
+        logger.warning("%s: no valid timestamps in hour file", task.label)
+        return empty_result()
 
     try:
-        hist = yf.Ticker(ticker).history(start=start, end=end, interval="1h")
+        closes = fetch_hourly_closes(task.stock.ticker, requested["bar"])
     except Exception:
-        logger.exception("%s (%s): Yahoo fetch failed", stock_type, ticker)
-        return pd.DataFrame(columns=list(COLUMNS))
-
-    closes = hourly_closes(hist)
+        logger.exception("%s: Yahoo fetch failed", task.label)
+        return empty_result()
     if closes.empty:
-        logger.warning(
-            "%s (%s): no hourly closes returned for %s–%s",
-            stock_type,
-            ticker,
-            start,
-            end,
-        )
-        return pd.DataFrame(columns=list(COLUMNS))
+        logger.warning("%s: Yahoo returned no hourly closes", task.label)
+        return empty_result()
 
-    frame = percentage_changes(closes, hours, stock_type)
+    frame = percentage_changes(closes, requested, task.stock.name)
     if frame.empty:
-        logger.warning(
-            "%s (%s): no hour-over-hour rows matched requested timestamps",
-            stock_type,
-            ticker,
-        )
+        logger.warning("%s: no requested hour had a previous-hour close", task.label)
     else:
         logger.info(
-            "%s (%s): %d rows from %d requested hours",
-            stock_type,
-            ticker,
-            len(frame),
-            len(hours),
+            "%s: %d rows from %d requested hours", task.label, len(frame), len(task.hours)
         )
     return frame

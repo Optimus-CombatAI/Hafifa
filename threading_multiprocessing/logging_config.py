@@ -3,15 +3,11 @@
 import logging
 import os
 
-from constants import LOG_DATE_FORMAT, LOG_FORMAT
+from constant import LOG_DATE_FORMAT, LOG_FORMAT
 
 
 def configure_logging() -> None:
-    """Configure stderr logging once; honor ``LOG_LEVEL`` from the environment."""
-    level_name = os.environ.get("LOG_LEVEL", "INFO").upper()
-    level = getattr(logging, level_name, None)
-    if not isinstance(level, int):
-        level = logging.INFO
-
+    """Configure stderr logging; honor ``LOG_LEVEL`` from the environment."""
+    level = os.environ.get("LOG_LEVEL", "INFO").upper()
     logging.basicConfig(level=level, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
-    logging.getLogger("yfinance").setLevel(logging.CRITICAL)
+    logging.getLogger("yfinance").setLevel(logging.ERROR)

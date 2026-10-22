@@ -28,20 +28,24 @@ In the first part, we focused only on Bitcoin. Now, adapt your existing code to 
 
 ## This implementation
 
-- `constants.py` — tickers, env var names, CSV columns
-- `logging_config.py` — stderr logging (`LOG_LEVEL`, default `INFO`; quiets yfinance)
+- `models.py` — `Stock` and `StockTask` data types
+- `constants.py` — tracked stocks, CSV columns, log formats
+- `logging_config.py` — stderr logging (`LOG_LEVEL`, default `INFO`; yfinance limited to errors)
+- `config.py` — env vars, paths, hour files, `StockTask` list
 - `stock_prices.py` — Yahoo fetch and hour-over-hour % change
-- `main.py` — env/config, `ThreadPoolExecutor` (one thread per stock), CSV output
+- `pipeline.py` — `ThreadPoolExecutor` (one thread per stock), merge, CSV output
+- `main.py` — bootstrap and orchestration
 
 ```bash
 cd threading_multiprocessing
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
+cp .env.example .env
 python main.py
 ```
 
-Configure via `.env`. Paths are relative to this folder.
+Configure via `.env` (see `.env.example`). Paths are relative to this folder.
 
 - Part 1: `DESTINATION_FILE`, `BITCOIN_DATES`
 - Part 2: also `GOOGLE_DATES`, `AMAZON_DATES` (unset date vars are skipped)
