@@ -24,7 +24,6 @@ class MusicPlayer:
         song = self.get_current_song()
 
         if not song:
-
             return
 
         pygame.mixer.music.load(song.local_song_path)
@@ -35,14 +34,12 @@ class MusicPlayer:
 
     def get_current_song(self) -> SongData | None:
         if not self.playlist.songs:
-
             return None
 
         return self.playlist.songs[self.current_song_index]
 
     def toggle_pause(self) -> None:
         if not self.playlist.songs:
-
             return
 
         if self.paused:
@@ -54,7 +51,6 @@ class MusicPlayer:
 
     def next_song(self) -> None:
         if not self.playlist.songs:
-
             return
 
         self.current_song_index = (self.current_song_index + 1) % len(
@@ -64,7 +60,6 @@ class MusicPlayer:
 
     def previous_song(self) -> None:
         if not self.playlist.songs:
-
             return
 
         self.current_song_index = (self.current_song_index - 1) % len(

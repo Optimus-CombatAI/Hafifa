@@ -17,7 +17,6 @@ class SongData:
         try:
             metadata = EasyID3(self.local_song_path)
         except (ID3NoHeaderError, OSError, ValueError):
-            
             return
 
         self.title = metadata.get("title", [self.title])[0]

@@ -124,7 +124,6 @@ class GUIHandler:
     ) -> tk.Button:
         for button, config in self.buttons:
             if config.functionality == functionality:
-                
                 return button
 
         raise ValueError(
