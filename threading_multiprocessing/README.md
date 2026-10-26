@@ -22,4 +22,16 @@ In the first part, we focused only on Bitcoin. Now, adapt your existing code to 
 - **Google**: `GOOGLE_DATES` (file: `google_dates.txt`)
 - **Bitcoin**: `BITCOIN_DATES` (file: `bitcoin_dates.txt`)
 
+## Run
+
+Hours default to `data/raw/{BTC-USD,GOOGL,AMZN}.txt`. Override with `BITCOIN_DATES`, `GOOGLE_DATES`, `AMAZON_DATES`. Destination is `DESTINATION_FILE` (default `data/processed/stock_changes.csv`).
+
+```text
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python main.py
+pytest
+pytest -m integration
+```
+
 ## Good Luck! (:
