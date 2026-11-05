@@ -6,8 +6,10 @@ from sqlalchemy.orm import Session
 
 from src.parsing.air_quality_csv_parser import AirQualityCsvParser
 from src.repositories.air_quality_repository import AirQualityRepository
+from src.repositories.alert_repository import AlertRepository
 from src.services.air_quality_query_service import AirQualityQueryService
 from src.services.air_quality_upload_service import AirQualityUploadService
+from src.services.alert_query_service import AlertQueryService
 from src.services.aqi_calculator import AqiCalculator
 
 
@@ -43,3 +45,10 @@ def get_air_quality_query_service(air_quality_repository: AirQualityRepositoryDe
 
 
 AirQualityQueryServiceDependency = Annotated[AirQualityQueryService, Depends(get_air_quality_query_service)]
+
+
+def get_alert_query_service(session: SessionDependency) -> AlertQueryService:
+    return AlertQueryService(AlertRepository(session))
+
+
+AlertQueryServiceDependency = Annotated[AlertQueryService, Depends(get_alert_query_service)]
