@@ -1,15 +1,13 @@
 import uvicorn
-from fastapi import FastAPI
 
-from src.api import health_router
+from src.api.app import create_app
 from src.configs.logging_config import configure_logging
 from src.configs.settings import ApiSettings
 
 settings = ApiSettings()
 configure_logging(settings.log_file_path)
 
-app = FastAPI(title="Air Quality API")
-app.include_router(health_router.router)
+app = create_app(settings)
 
 
 if __name__ == "__main__":
