@@ -15,6 +15,11 @@ class AirQualityRepository:
         self._session.add_all(records)
         self._session.commit()
 
+    def get_cities_by_dates(self, dates: set[datetime.date]) -> set[tuple[datetime.date, str]]:
+        query = select(AirQualityRecord.date, AirQualityRecord.city).where(AirQualityRecord.date.in_(dates))
+
+        return {(date, city) for date, city in self._session.execute(query)}
+
     def get_by_date_range(self, start_date: datetime.date, end_date: datetime.date) -> list[AirQualityRecord]:
         query = (
             select(AirQualityRecord)

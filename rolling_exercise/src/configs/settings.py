@@ -9,5 +9,6 @@ class ApiSettings(BaseSettings):
 
     log_file_path: Path
     database_url: str
+    alert_aqi_threshold: float = Field(ge=0)
     api_host: str
     api_port: int = Field(gt=0)
