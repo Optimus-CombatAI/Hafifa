@@ -54,7 +54,7 @@ class AirQualityUploadService:
     ) -> tuple[list[AirQualityReading], list[RejectedRow]]:
         upload_dates = {reading.date for reading in readings}
         taken_city_days = {
-            (date, city.lower()) for date, city in self._air_quality_repository.get_cities_by_dates(upload_dates)
+            (date, city.lower()) for date, city in self._air_quality_repository.get_city_days(upload_dates)
         }
         new_readings = []
         duplicate_rows = []

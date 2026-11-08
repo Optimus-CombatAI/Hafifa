@@ -15,7 +15,7 @@ class AirQualityRepository:
         self._session.add_all(records)
         self._session.commit()
 
-    def get_cities_by_dates(self, dates: set[datetime.date]) -> set[tuple[datetime.date, str]]:
+    def get_city_days(self, dates: set[datetime.date]) -> set[tuple[datetime.date, str]]:
         query = select(AirQualityRecord.date, AirQualityRecord.city).where(AirQualityRecord.date.in_(dates))
 
         return {(date, city) for date, city in self._session.execute(query)}
@@ -37,13 +37,13 @@ class AirQualityRepository:
     def get_city_aqi_average(self, city: str) -> float | None:
         return self._session.scalar(select(func.avg(AirQualityRecord.aqi)).where(self._is_city(city)))
 
-    def get_best_cities(self, limit: int) -> list[CityAverageAqi]:
+    def get_best_cities(self, count: int) -> list[CityAverageAqi]:
         average_aqi = func.avg(AirQualityRecord.aqi).label("average_aqi")
         query = (
             select(AirQualityRecord.city, average_aqi)
             .group_by(AirQualityRecord.city)
             .order_by(average_aqi, AirQualityRecord.city)
-            .limit(limit)
+            .limit(count)
         )
 
         return [CityAverageAqi(city=city, average_aqi=aqi) for city, aqi in self._session.execute(query)]

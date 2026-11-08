@@ -13,7 +13,7 @@ def repository(session) -> AirQualityRepository:
     return AirQualityRepository(session)
 
 
-def test_get_cities_by_dates_returns_only_those_dates(repository):
+def test_get_city_days_returns_only_those_dates(repository):
     repository.save_all(
         [
             make_record(date=date(2024, 11, 19), city="Haifa"),
@@ -22,7 +22,7 @@ def test_get_cities_by_dates_returns_only_those_dates(repository):
         ]
     )
 
-    city_days = repository.get_cities_by_dates({date(2024, 11, 19), date(2024, 11, 21)})
+    city_days = repository.get_city_days({date(2024, 11, 19), date(2024, 11, 21)})
 
     assert city_days == {(date(2024, 11, 19), "Haifa"), (date(2024, 11, 21), "Eilat")}
 
@@ -96,7 +96,7 @@ def test_get_best_cities_returns_lowest_averages_first(repository):
         ]
     )
 
-    best_cities = repository.get_best_cities(limit=3)
+    best_cities = repository.get_best_cities(count=3)
 
     assert best_cities == [
         CityAverageAqi(city="Eilat", average_aqi=30),

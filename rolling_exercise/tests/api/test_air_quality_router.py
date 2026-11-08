@@ -45,6 +45,7 @@ def test_by_city_returns_city_records_of_every_day(client):
         ("2024-11-20", "Haifa"),
     ]
 
+
 def test_aqi_average_names_the_city(client):
     upload_rows(client, csv_row(city="Haifa"))
 

@@ -29,7 +29,7 @@ class AirQualityCsvParser:
             try:
                 readings.append(self._to_reading(row, reader.line_num))
             except ValidationError as error:
-                rejected_row = RejectedRow(line_number=reader.line_num, reason=self._describe(error))
+                rejected_row = RejectedRow(line_number=reader.line_num, reason=self._to_rejection_reason(error))
                 logger.warning(f"Rejected line {rejected_row.line_number}: {rejected_row.reason}")
                 rejected_rows.append(rejected_row)
 
@@ -57,5 +57,5 @@ class AirQualityCsvParser:
 
         return AirQualityReading.model_validate({"line_number": line_number, **fields})
 
-    def _describe(self, error: ValidationError) -> str:
+    def _to_rejection_reason(self, error: ValidationError) -> str:
         return "; ".join(f"{COLUMN_BY_FIELD[issue['loc'][0]]}: {issue['msg']}" for issue in error.errors())

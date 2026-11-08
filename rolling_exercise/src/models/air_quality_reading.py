@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class AirQualityReading(BaseModel):
-    """One validated row of an uploaded file"""
+    """One validated row of an uploaded file."""
 
     model_config = ConfigDict(frozen=True, str_strip_whitespace=True)
 
